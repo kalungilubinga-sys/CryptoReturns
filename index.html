@@ -54,7 +54,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const validAddress = (network, address) => network === 'BSC' ? /^0x[a-fA-F0-9]{40}$/.test(address) : /^T[1-9A-HJ-NP-Za-km-z]{33}$/.test(address);
   const query = new URLSearchParams(location.search), hashParams = new URLSearchParams(location.hash.slice(1));
   const initialRecovery = hashParams.get('type') === 'recovery' || query.get('type') === 'recovery';
-  let sb, settings = null, authUser = null, state = null, screenError = '', loading = true, connected = false;
+  let sb, settings = null, authUser = null, access = null, state = null, screenError = '', loading = true, connected = false;
   let page = 'home', authMode = query.has('ref') ? 'signup' : 'login', authStep = 'details', authError = '', authFlow = false, pending = null;
   let search = '', depositAmount = 100, network = 'BSC', ack = false, withdrawType = 'daily', busy = false, epoch = 0, syncJob = null, lastSync = null;
   const drafts = new Map();
@@ -65,7 +65,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const codes = 'AF AL DZ AS AD AO AI AG AR AM AW AU AT AZ BS BH BD BB BY BE BZ BJ BM BT BO BA BW BR BN BG BF BI KH CM CA CV KY CF TD CL CN CO KM CG CD CR CI HR CU CY CZ DK DJ DM DO EC EG SV GQ ER EE SZ ET FJ FI FR GA GM GE DE GH GI GR GD GT GN GW GY HT HN HK HU IS IN ID IR IQ IE IL IT JM JP JO KZ KE KI KW KG LA LV LB LS LR LY LI LT LU MO MG MW MY MV ML MT MH MR MU MX FM MD MC MN ME MA MZ MM NA NR NP NL NZ NI NE NG MK NO OM PK PW PA PG PY PE PH PL PT PR QA RO RU RW KN LC VC WS SM ST SA SN RS SC SL SG SK SI SB SO ZA KR SS ES LK SD SR SE CH SY TW TJ TZ TH TL TG TO TT TN TR TM TV UG UA AE GB US UY UZ VU VA VE VN YE ZM ZW'.split(' ');
   const regions = typeof Intl.DisplayNames === 'function' ? new Intl.DisplayNames(['en'], { type:'region' }) : null;
   const countryName = code => regions ? regions.of(code) : code;
-  const me = () => state?.users.find(u => u.id === authUser?.id);
+  const me = () => access?.user_id === authUser?.id ? state?.users.find(u => u.id === authUser.id && u.role === access.role) : null;
   const days = u => u.approved ? Math.max(0, Math.floor((Date.now() - new Date(u.approved).getTime()) / day)) : 0;
   const capitalRate = u => u.approved && Date.now() <= new Date(u.approved).getTime() + 45 * day ? .50 : .35;
   const matches = text => String(text).toLowerCase().includes(search.toLowerCase());
@@ -108,7 +108,7 @@ document.addEventListener('DOMContentLoaded', () => {
       return `<h2 class="font-display font-bold text-2xl">Reset your password</h2><p class="text-muted text-sm mt-3 mb-6">Enter the email address verified when you created your account.</p>${formError()}<form id="recovery-form" class="space-y-4"><label class="block text-sm">Verified email address<input required type="email" name="identity" autocomplete="email" class="${input} mt-2" placeholder="you@example.com"></label><button class="${primary} w-full">Send email recovery code</button></form><button data-action="auth-back" class="text-sm text-muted mt-5 hover:text-white">Back to sign in</button>`;
     }
     const signup = authMode === 'signup';
-    return `<div class="flex gap-5 border-b border-line mb-7"><button data-action="auth-mode" data-value="login" class="pb-4 text-sm ${!signup ? 'text-gold border-b-2 border-gold' : 'text-muted'}">Sign in</button><button data-action="auth-mode" data-value="signup" class="pb-4 text-sm ${signup ? 'text-gold border-b-2 border-gold' : 'text-muted'}">Create account</button></div>${signup ? '<div class="flex items-center gap-3 text-xs text-muted mb-5"><span class="text-gold">1. Account details</span><span aria-hidden="true">/</span><span>2. Email code & password</span></div>' : ''}<h2 class="font-display font-bold text-2xl">${signup ? 'Create your account' : 'Welcome back'}</h2><p class="text-muted text-sm mt-2 mb-6 leading-relaxed">${signup ? 'Enter your details to receive an email verification code. Create your password in the next step.' : 'Sign in with your password. Your account role automatically opens the user or admin panel.'}</p>${formError()}<form id="auth-form" class="space-y-4">${signup ? `<label class="block text-sm">Email address<input required type="email" name="email" maxlength="254" autocomplete="email" class="${input} mt-2" placeholder="you@example.com"></label><label class="block text-sm">Full name<input required name="name" maxlength="120" autocomplete="name" class="${input} mt-2" placeholder="Your full name"></label><label class="block text-sm">Country<select name="country" class="${input} mt-2">${countries()}</select></label><label class="block text-sm">Phone number<input required type="tel" name="phone" autocomplete="tel" class="${input} mt-2" placeholder="+256 700 000 000"></label><p class="text-xs text-muted leading-relaxed">Use your international country code. Account verification uses email codes only, never phone codes. After signup, sign in with your email or phone number and password.</p>` : `<label class="block text-sm">Email or international phone<input required name="identity" maxlength="254" autocomplete="username" class="${input} mt-2" placeholder="you@example.com or +256…"></label>${passwordField()}<div class="text-right"><button type="button" data-action="forgot" class="text-xs text-gold hover:underline">Forgot password?</button></div>`}<button class="${primary} w-full" ${!connected || (signup && settings?.external?.email === false) ? 'disabled' : ''}>${signup ? 'Get verification code' : 'Sign in'} ${icon('arrow-right','ml-2')}</button></form><div class="border-t border-line mt-6 pt-5 flex items-start gap-3 text-xs text-muted leading-relaxed">${icon('shield-halved','text-gold mt-0.5')}<p>Supabase secures your account. Email verification is required once at signup, not on each login. New accounts start at zero until real deposits are approved.${settings?.external?.email === false ? '<br><span class="text-amber-200">Email authentication is disabled. Ask Admin to enable the Email provider in Supabase.</span>' : ''}</p></div>`;
+    return `<div class="flex gap-5 border-b border-line mb-7"><button data-action="auth-mode" data-value="login" class="pb-4 text-sm ${!signup ? 'text-gold border-b-2 border-gold' : 'text-muted'}">Sign in</button><button data-action="auth-mode" data-value="signup" class="pb-4 text-sm ${signup ? 'text-gold border-b-2 border-gold' : 'text-muted'}">Create account</button></div>${signup ? '<div class="flex items-center gap-3 text-xs text-muted mb-5"><span class="text-gold">1. Account details</span><span aria-hidden="true">/</span><span>2. Email code & password</span></div>' : ''}<h2 class="font-display font-bold text-2xl">${signup ? 'Create your account' : 'Welcome back'}</h2><p class="text-muted text-sm mt-2 mb-6 leading-relaxed">${signup ? 'Enter your details to receive an email verification code. Create your password in the next step.' : 'Sign in with your existing password. The server verifies your permissions and opens the correct dashboard. Administrator accounts open only the Admin Dashboard.'}</p>${formError()}<form id="auth-form" class="space-y-4">${signup ? `<label class="block text-sm">Email address<input required type="email" name="email" maxlength="254" autocomplete="email" class="${input} mt-2" placeholder="you@example.com"></label><label class="block text-sm">Full name<input required name="name" maxlength="120" autocomplete="name" class="${input} mt-2" placeholder="Your full name"></label><label class="block text-sm">Country<select name="country" class="${input} mt-2">${countries()}</select></label><label class="block text-sm">Phone number <span class="text-muted">(optional)</span><input type="tel" name="phone" maxlength="30" autocomplete="tel" class="${input} mt-2" placeholder="+256 700 000 000"></label><p class="text-xs text-muted leading-relaxed">Register with your own email address. If you add a phone number, use your international country code and a number not registered to another account. Verification uses email codes only. Existing administrators should sign in, not create another account.</p>` : `<label class="block text-sm">Email or international phone<input required name="identity" maxlength="254" autocomplete="username" class="${input} mt-2" placeholder="you@example.com or +256…"></label>${passwordField()}<div class="text-right"><button type="button" data-action="forgot" class="text-xs text-gold hover:underline">Forgot password?</button></div>`}<button class="${primary} w-full" ${!connected || (signup && settings?.external?.email === false) ? 'disabled' : ''}>${signup ? 'Get verification code' : 'Sign in'} ${icon('arrow-right','ml-2')}</button></form><div class="border-t border-line mt-6 pt-5 flex items-start gap-3 text-xs text-muted leading-relaxed">${icon('shield-halved','text-gold mt-0.5')}<p>Supabase secures your account. Email verification is required once at signup, not on each login. New accounts start at zero until real deposits are approved.${settings?.external?.email === false ? '<br><span class="text-amber-200">Email authentication is disabled. Ask Admin to enable the Email provider in Supabase.</span>' : ''}</p></div>`;
   }
   function auth() {
     $('app').innerHTML = `<div class="max-w-7xl mx-auto px-5 md:px-10"><header class="py-7 flex justify-between items-center">${brand()}<span class="hidden sm:block text-sm text-muted">Built for a global community ${icon('globe','ml-2 text-gold')}</span></header><main id="main" class="grid lg:grid-cols-[1.15fr_1fr] items-center gap-12 lg:gap-24 py-8 lg:py-14"><section><div class="inline-flex items-center gap-2 rounded-full border border-gold/25 bg-gold/5 px-3 py-1.5 text-xs text-gold"><span class="w-1.5 h-1.5 rounded-full bg-gold"></span>YOUR CRYPTO. ONE CLEAR VIEW.</div><h1 class="font-display text-4xl sm:text-5xl xl:text-6xl font-extrabold tracking-tight leading-[1.15] mt-7">Your investment.<br>Your earnings.<br><span class="text-gold">Always in focus.</span></h1><p class="max-w-md text-muted leading-relaxed mt-6">Manage investment requests, follow your recorded earnings, and stay connected. Wherever you call home.</p><div class="grid grid-cols-2 gap-4 max-w-md mt-8"><div class="${card} p-5"><span class="text-gold">${icon('wallet')}</span><p class="font-display font-bold mt-4">Two networks.</p><p class="text-xs text-muted mt-2">USDT · BEP20 / TRC20</p></div><div class="${card} p-5"><span class="text-gold">${icon('database')}</span><p class="font-display font-bold mt-4">Real records.</p><p class="text-xs text-muted mt-2">Your authenticated account</p></div></div></section><section class="${card} p-6 sm:p-9">${authContent()}</section></main><footer class="border-t border-line py-6 text-xs text-muted flex justify-between"><span>© ${new Date().getFullYear()} Crypto Returns</span><span>USDT · BEP20 · TRC20</span></footer></div>`;
@@ -125,7 +125,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (screenError) return renderError();
     if (loading && !state) return renderLoading();
     const u = me(); if (!u) return auth();
-    const admin = u.role === 'admin', nav = admin ? adminNav : userNav;
+    const admin = access.role === 'admin', nav = admin ? adminNav : userNav;
     $('app').innerHTML = `<div class="lg:flex min-h-[calc(100vh-33px)]"><aside class="hidden lg:flex w-64 shrink-0 border-r border-line flex-col px-5 py-7 bg-[#0c111d]">${brand()}<div class="mt-10 mb-3 px-3 text-[10px] tracking-[.18em] text-muted">${admin ? 'ADMIN WORKSPACE' : 'YOUR WORKSPACE'}</div><nav aria-label="Workspace navigation" class="space-y-2">${nav.map(([id,i,title,sub]) => `<button data-action="nav" data-value="${id}" ${page === id ? 'aria-current="page"' : ''} class="w-full flex gap-3 items-center rounded-xl p-3 text-left ${page === id ? 'bg-gold/10 text-gold' : 'text-muted hover:bg-white/5 hover:text-white'}">${icon(i,'w-5')}<span><span class="block text-sm font-semibold">${title}</span><span class="block text-[11px] mt-0.5">${sub}</span></span>${id === 'account' ? dot(u) : ''}</button>`).join('')}</nav><div class="mt-auto pt-12"><div class="rounded-xl border border-line p-4"><div class="text-gold text-sm mb-2">${icon('circle-info','mr-2')}Need a hand?</div><p class="text-muted text-xs leading-relaxed">Your private support conversation is one click away.</p><button data-action="nav" data-value="account" class="text-xs mt-3 font-bold hover:text-gold">${admin ? 'Open customer care' : 'Contact support'} ${icon('arrow-right','ml-2')}</button></div><button data-action="logout" class="mt-5 flex items-center gap-3 text-sm text-muted hover:text-white p-3">${icon('right-from-bracket')}Sign out</button></div></aside><div class="min-w-0 flex-1"><header class="border-b border-line px-5 md:px-8 lg:px-10 py-5 flex items-center justify-between gap-4"><div class="lg:hidden">${brand()}</div><div class="hidden lg:flex gap-2 items-center text-xs text-muted">Workspace ${icon('chevron-right','text-[9px] mx-2')}<span class="text-slate-200">${nav.find(n => n[0] === page)?.[2] || 'Overview'}</span></div><div class="flex items-center gap-3"><span class="hidden sm:inline text-xs text-muted">${icon('globe','mr-2')}${esc(countryName(u.country))} <span class="mx-2 text-line">|</span> USD</span><button data-action="refresh" aria-label="Refresh live records" class="h-9 w-9 rounded-xl border border-line hover:bg-white/5">${icon('rotate')}</button><button data-action="nav" data-value="account" aria-label="Open messages" class="relative h-9 w-9 rounded-xl border border-line hover:bg-white/5">${icon('bell')}${hasUnread(u) ? '<span class="absolute right-1.5 top-1 h-1.5 w-1.5 bg-gold rounded-full"></span>' : ''}</button><span class="hidden sm:grid place-items-center w-9 h-9 rounded-full bg-gold/15 text-gold text-xs font-bold">${esc(u.name.split(' ').filter(Boolean).map(n => n[0]).join('').slice(0,2))}</span></div></header>${admin ? `<nav aria-label="Admin navigation" class="lg:hidden flex gap-2 overflow-x-auto px-5 pt-4">${nav.map(n => `<button class="shrink-0 px-3 py-2 rounded-lg text-sm ${page === n[0] ? 'bg-gold text-ink' : 'border border-line'}" data-action="nav" data-value="${n[0]}">${n[2]}</button>`).join('')}</nav>` : ''}<main id="main" class="max-w-[1440px] mx-auto px-5 md:px-8 lg:px-10 pt-8 pb-28 lg:pb-8">${content(u)}</main><footer class="hidden lg:flex border-t border-line px-10 py-5 text-[11px] text-muted justify-between"><span>© ${new Date().getFullYear()} Crypto Returns</span><span>Live account records · Auto-refresh every 10 seconds</span></footer></div></div>${!admin ? `<nav aria-label="Main navigation" class="lg:hidden fixed bottom-0 inset-x-0 z-30 bg-[#0c111d] border-t border-line flex justify-around px-1 pt-3 pb-[max(1.25rem,env(safe-area-inset-bottom))]">${userNav.map(n => `<button data-action="nav" data-value="${n[0]}" ${page === n[0] ? 'aria-current="page"' : ''} class="w-1/5 flex flex-col items-center gap-1.5 text-[10px] ${page === n[0] ? 'text-gold' : 'text-muted'}">${icon(n[1],'text-base')}<span>${n[2]}</span></button>`).join('')}</nav>` : ''}`;
     restoreDrafts(); updateWithdrawalPreview();
   }
@@ -229,7 +229,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const rows = [...state.deposits.map(d => ({...d,kind:'Deposit'})),...state.withdrawals.map(w => ({...w,kind:`${w.type} withdrawal`}))].filter(r => r.status !== 'pending').sort((a,b) => new Date(b.processed_at) - new Date(a.processed_at)).filter(r => { const f = findUser(r.user_id); return matches(`${f.name} ${f.phone} ${r.kind} ${r.status}`); });
       return heading('Request history','Archived records; no processed requests appear on the main pending lists.') + searchBox('Search user names, request types, or statuses') + `<section class="${card} p-5">${rows.map(r => `<div class="border-b border-line last:border-0 py-4 flex flex-wrap justify-between gap-4"><div><p class="text-sm">${esc(findUser(r.user_id).name)} · ${esc(r.kind)}</p><p class="text-xs text-muted mt-1">${when(r.processed_at)} · ${r.network} · ${money(r.amount)}${r.net_amount != null ? ` · Net ${money(r.net_amount)}` : ''}</p></div><div class="flex items-center gap-3">${badge(r.status)}${banButton(findUser(r.user_id))}</div></div>`).join('') || empty('No matching archived requests.')}</section>`;
     }
-    if (page === 'settings') return heading('Deposit wallet settings','These addresses are loaded from and saved to Supabase.') + `<section class="${card} p-6 max-w-3xl"><p class="text-sm text-gold mb-5">Double-check the chain and ownership before changing a deposit address.</p><form id="wallet-form" data-draft="wallets" class="space-y-5">${['BSC','TRX'].map(n => `<label class="block text-sm">${n} / ${n === 'BSC' ? 'BEP20' : 'TRC20'} USDT address<input required name="${n}" value="${esc(state.wallets[n] || '')}" pattern="${n === 'BSC' ? '0x[a-fA-F0-9]{40}' : 'T[1-9A-HJ-NP-Za-km-z]{33}'}" class="${input} mt-2 font-mono"></label>`).join('')}<button class="${primary}">Save wallet addresses</button></form><div class="border-t border-line mt-6 pt-6 text-xs text-muted leading-relaxed">Roles, balances, financial approvals, and earnings are enforced server-side. Configured administrator credentials are read only in the login Edge Function; they are never embedded in this website.</div><div class="border-t border-line mt-6 pt-6"><h2 class="font-display font-semibold text-sm">Email verification code delivery</h2><p class="text-xs text-muted leading-relaxed mt-3">In Supabase Dashboard → Authentication → Email Templates, include <code class="text-gold">${esc('{{ .Token }}')}</code> in the Magic Link, Confirm Signup, and Reset Password templates instead of a confirmation-link-only message. The website sends and validates real Supabase email codes; saving wallet settings does not change email templates.</p><p class="text-xs text-muted leading-relaxed mt-3">For international delivery, configure production SMTP in Supabase and enable the Email provider. Without custom SMTP, Supabase's built-in email service may restrict recipients and sending rates.</p><a href="https://supabase.com/docs/guides/auth/auth-email-passwordless" target="_blank" rel="noopener noreferrer" class="inline-block text-xs text-gold hover:underline mt-3">Email OTP setup guide ${icon('arrow-up-right-from-square','ml-1')}</a></div></section>`;
+    if (page === 'settings') return heading('Deposit wallet settings','These addresses are loaded from and saved to Supabase.') + `<section class="${card} p-6 max-w-3xl"><p class="text-sm text-gold mb-5">Double-check the chain and ownership before changing a deposit address.</p><form id="wallet-form" data-draft="wallets" class="space-y-5">${['BSC','TRX'].map(n => `<label class="block text-sm">${n} / ${n === 'BSC' ? 'BEP20' : 'TRC20'} USDT address<input required name="${n}" value="${esc(state.wallets[n] || '')}" pattern="${n === 'BSC' ? '0x[a-fA-F0-9]{40}' : 'T[1-9A-HJ-NP-Za-km-z]{33}'}" class="${input} mt-2 font-mono"></label>`).join('')}<button class="${primary}">Save wallet addresses</button></form><div class="border-t border-line mt-6 pt-6 text-xs text-muted leading-relaxed">Roles, balances, financial approvals, and earnings are enforced server-side. Administrator access is verified against the existing protected account role on the server. Login never creates administrator accounts, changes credentials, or assigns roles.</div><div class="border-t border-line mt-6 pt-6"><h2 class="font-display font-semibold text-sm">Email verification code delivery</h2><p class="text-xs text-muted leading-relaxed mt-3">In Supabase Dashboard → Authentication → Email Templates, include <code class="text-gold">${esc('{{ .Token }}')}</code> in the Magic Link, Confirm Signup, and Reset Password templates instead of a confirmation-link-only message. The website sends and validates real Supabase email codes; saving wallet settings does not change email templates.</p><p class="text-xs text-muted leading-relaxed mt-3">For international delivery, configure production SMTP in Supabase and enable the Email provider. Without custom SMTP, Supabase's built-in email service may restrict recipients and sending rates.</p><a href="https://supabase.com/docs/guides/auth/auth-email-passwordless" target="_blank" rel="noopener noreferrer" class="inline-block text-xs text-gold hover:underline mt-3">Email OTP setup guide ${icon('arrow-up-right-from-square','ml-1')}</a></div></section>`;
     return adminHome();
   }
 
@@ -251,24 +251,34 @@ document.addEventListener('DOMContentLoaded', () => {
     if (error) throw new Error(error.code === '23505' ? 'This transaction or application has already been submitted. Refresh and check your requests.' : error.message);
     return data;
   }
-  async function edge(name, body = {}) {
-    const {data,error} = await sb.functions.invoke(name,{body});
+  async function edge(name, body = {}, token) {
+    const options = {body};
+    if (token) options.headers = {Authorization:`Bearer ${token}`};
+    const {data,error} = await sb.functions.invoke(name,options);
     if (error) {
-      let message = error.message;
-      if (error instanceof window.supabase.FunctionsHttpError || error.context) {
+      let message = error.message, httpStatus, code;
+      const HttpError = window.supabase.FunctionsHttpError;
+      if ((typeof HttpError === 'function' && error instanceof HttpError) || error.context) {
         try {
           const response = error.context, text = await response.text(); let detail = text;
-          try { const parsed = JSON.parse(text); detail = parsed.error || parsed.message || text; } catch (_) { /* Preserve the actual HTTP error. */ }
-          message = `[HTTP ${response.status}] ${detail || message}`;
-        } catch (_) { /* Use the SDK transport error if the response cannot be read. */ }
+          httpStatus = response.status;
+          try { const parsed = JSON.parse(text); detail = parsed.error || parsed.message || text; code = parsed.code; } catch (_) { /* Preserve the actual HTTP error. */ }
+          message = name === 'account-access' ? detail || message : `[HTTP ${response.status}] ${detail || message}`;
+        } catch (_) { /* Preserve transport errors if the HTTP body cannot be read. */ }
       }
-      throw new Error(`${name}: ${message}`);
+      const failure = new Error(name === 'account-access' ? message : `${name}: ${message}`);
+      failure.status = httpStatus; failure.code = code; throw failure;
     }
     if (!data || data.error) throw new Error(data?.error || `${name}: Empty response from Supabase.`);
     return data;
   }
+  async function verifyAccess(token) {
+    const checked = await edge('account-access',{action:'session'},token);
+    if (typeof checked.user_id !== 'string' || !['admin','user'].includes(checked.role)) throw new Error('The server did not return valid account permissions. No dashboard access was granted.');
+    return checked;
+  }
   async function denyBanned() {
-    state = null; authUser = null; screenError = ''; authFlow = false; loading = false; epoch++; drafts.clear();
+    state = null; authUser = null; access = null; screenError = ''; authFlow = false; loading = false; epoch++; drafts.clear();
     const {error} = await sb.auth.signOut({scope:'local'}); if (error) console.error('Supabase sign-out:',error.message);
     authError = 'Your account has been banned. Contact Admin.'; authMode = 'login'; authStep = 'details';
     status('Account access blocked. Contact Admin.'); render();
@@ -279,11 +289,18 @@ document.addEventListener('DOMContentLoaded', () => {
     if (syncJob?.id === id && syncJob.version === version) return syncJob.promise;
     const task = (async () => {
       try {
+        // Revalidate the session and protected role on the server before workspace reads.
+        const checked = await verifyAccess();
+        if (version !== epoch || authUser?.id !== id) return;
+        if (checked.user_id !== id) throw new Error('Account session mismatch. Sign out and sign in again.');
+        if (access && checked.role !== access.role) { page = 'home'; search = ''; drafts.clear(); state = null; }
+        access = checked;
         const {data:profile,error:profileError} = await sb.from('profiles').select('*').eq('id',id).single();
         if (profileError) throw new Error(`profiles: ${profileError.message}. Ensure the account profile was created by your SQL migration.`);
         if (version !== epoch || authUser?.id !== id) return;
         if (profile.banned) return await denyBanned();
-        const admin = profile.role === 'admin', owner = admin ? null : id;
+        if (profile.role !== checked.role) throw new Error('Your account permissions changed during verification. Retry; no alternate dashboard was opened.');
+        const admin = checked.role === 'admin', owner = admin ? null : id;
         const [profiles,balances,deposits,withdrawals,messages,walletRows,ledger] = await Promise.all([
           admin ? rows('profiles',null) : Promise.resolve([profile]), rows('balances',owner,'user_id'), rows('deposits',owner), rows('withdrawals',owner), rows('messages',owner), rows('deposit_wallets',null,'network'), admin ? Promise.resolve([]) : rows('earnings_ledger',id)
         ]);
@@ -302,8 +319,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!quiet || changed) render();
       } catch (error) {
         if (version !== epoch || authUser?.id !== id) return;
-        console.error('Supabase data load:',error);
-        screenError = error.message || 'Unable to load data from Supabase.'; state = null; loading = false;
+        if (error.code === 'ACCOUNT_BANNED') return await denyBanned();
+        console.error('Supabase data load:',error.message);
+        screenError = error.message || 'Unable to load data from Supabase.'; state = null; access = null; loading = false;
         status('Live database request failed. No substitute data is shown.'); render();
       }
     })();
@@ -322,12 +340,39 @@ document.addEventListener('DOMContentLoaded', () => {
     if (state && !screenError) toast(message);
   }
   async function activate(session) {
-    if (!session?.user) { authUser = null; state = null; loading = false; render(); return; }
-    if (session.user.user_metadata?.password_ready === false) {
-      authUser = session.user; state = null; loading = false; authFlow = true; authMode = 'signup'; authStep = 'password'; pending = {kind:'signup',method:'email',verified:true,target:session.user.email || ''}; render(); return;
+    if (!session?.user) { authUser = null; access = null; state = null; loading = false; render(); return; }
+    const previousId = authUser?.id, previousRole = access?.role;
+    authUser = session.user; access = null; state = null; epoch++; screenError = ''; loading = true; render();
+    const version = epoch;
+    try {
+      const checked = await verifyAccess(session.access_token);
+      if (version !== epoch || authUser?.id !== session.user.id) return;
+      if (checked.user_id !== session.user.id) throw new Error('Account session validation failed. Sign in again.');
+      access = checked;
+      if (previousId !== session.user.id || previousRole !== checked.role) { page = 'home'; search = ''; drafts.clear(); }
+      // Server-verified administrators bypass all normal-user signup/password setup paths.
+      if (checked.role === 'admin') { authFlow = false; pending = null; authStep = 'details'; }
+      else if (!checked.password_ready) {
+        loading = false; authFlow = true; authMode = 'signup'; authStep = 'password'; pending = {kind:'signup',method:'email',verified:true,target:session.user.email || ''}; render(); return;
+      }
+      await sync();
+    } catch (error) {
+      if (version !== epoch || authUser?.id !== session.user.id) return;
+      if (error.code === 'ACCOUNT_BANNED') return await denyBanned();
+      access = null; state = null; loading = false; screenError = error.message || 'Unable to verify account permissions.';
+      status('Account permissions could not be verified. Dashboard access is blocked.'); render();
     }
-    if (authUser?.id !== session.user.id) { page = 'home'; search = ''; drafts.clear(); state = null; }
-    authUser = session.user; epoch++; screenError = ''; loading = true; render(); await sync();
+  }
+  async function openRecovery(session) {
+    if (!session?.user) throw new Error('Your recovery session expired. Request a new email code.');
+    epoch++; authUser = session.user; access = null; state = null; loading = true; authFlow = true; render();
+    const version = epoch, checked = await verifyAccess(session.access_token);
+    if (version !== epoch || authUser?.id !== session.user.id) return;
+    if (checked.user_id !== session.user.id) throw new Error('Recovery session validation failed.');
+    if (checked.role === 'admin') {
+      authFlow = false; await activate(session); if (state) toast('Admin Dashboard opened. Existing administrator credentials were not changed.'); return;
+    }
+    access = checked; loading = false; authMode = 'recovery'; authStep = 'password'; pending = {kind:'recovery',method:'email',verified:true,target:session.user.email || ''}; authError = ''; render();
   }
   async function authSettings() {
     const controller = new AbortController(), timer = setTimeout(() => controller.abort(),15000);
@@ -350,14 +395,14 @@ document.addEventListener('DOMContentLoaded', () => {
           setTimeout(async () => {
             try {
               if (event === 'PASSWORD_RECOVERY') {
-                epoch++; authUser = session?.user || null; state = null; loading = false; authFlow = true; authMode = 'recovery'; authStep = 'password'; pending = {kind:'recovery',method:'email',verified:true,target:session?.user?.email || ''}; authError = ''; render();
+                await openRecovery(session);
               } else if (event === 'SIGNED_OUT') {
-                epoch++; authUser = null; state = null; loading = false; drafts.clear(); if (!authFlow) render();
+                epoch++; authUser = null; access = null; state = null; loading = false; drafts.clear(); if (!authFlow) render();
               } else if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && session && !authFlow && connected) {
                 if (authUser?.id === session.user.id && state) { authUser = session.user; return; }
                 await activate(session);
               }
-            } catch (error) { screenError = error.message; loading = false; render(); }
+            } catch (error) { access = null; state = null; screenError = error.message; loading = false; render(); }
           },0);
         });
       }
@@ -368,29 +413,32 @@ document.addEventListener('DOMContentLoaded', () => {
       if (callbackError) { authError = callbackError; history.replaceState({},document.title,location.pathname + (query.has('ref') ? `?ref=${encodeURIComponent(query.get('ref'))}` : '')); }
       status('Supabase authentication connected · Sign in to load your live account records.',true);
       const session = sessionResult.data.session;
-      if (session && initialRecovery) { authUser = session.user; authFlow = true; authMode = 'recovery'; authStep = 'password'; pending = {kind:'recovery',method:'email',verified:true,target:session.user.email || ''}; render(); }
+      if (session && initialRecovery) await openRecovery(session);
       else if (session && !authFlow) await activate(session);
       else render();
     } catch (error) {
-      connected = false; loading = false; state = null;
+      connected = false; loading = false; access = null; state = null;
       screenError = error.name === 'AbortError' ? 'Supabase did not respond within 15 seconds. Check your connection and retry.' : error.message || 'Unable to connect to Supabase.';
       status('Supabase connection failed. No demonstration data is available.'); render();
     }
   }
   async function resetAuthMode(mode = 'login') {
     if (authFlow && authUser) { const {error} = await sb.auth.signOut({scope:'local'}); if (error) throw error; }
-    authFlow = false; authUser = null; state = null; pending = null; authError = ''; screenError = ''; loading = false; authMode = mode; authStep = 'details'; render();
+    epoch++; authFlow = false; authUser = null; access = null; state = null; pending = null; authError = ''; screenError = ''; loading = false; authMode = mode; authStep = 'details'; render();
   }
   async function sendPendingCode() {
     if (!pending || pending.method !== 'email' || !pending.target) throw new Error('Start email verification again.');
     if (settings?.external?.email === false) throw new Error('Email authentication is disabled in Supabase. Ask Admin to enable the Email provider.');
-    const options = {shouldCreateUser:pending.kind === 'signup'};
-    if (pending.kind === 'signup') { options.data = pending.metadata; options.emailRedirectTo = `${location.origin}${location.pathname}`; }
+    // Signup and every resend are checked server-side before requesting an email code.
+    // A 409 conflict is displayed clearly; it never changes an existing administrator.
+    if (pending.kind === 'signup') {
+      const result = await edge('account-access',{action:'signup',email:pending.target,metadata:pending.metadata});
+      if (result.sent !== true) throw new Error('Supabase did not confirm the code request. Please retry.');
+      return;
+    }
     // Supabase email templates must contain {{ .Token }} for code-only emails.
-    const result = pending.kind === 'recovery'
-      ? await sb.auth.resetPasswordForEmail(pending.target,{redirectTo:`${location.origin}${location.pathname}`})
-      : await sb.auth.signInWithOtp({email:pending.target,options});
-    if (result.error) throw new Error(result.error.message);
+    const {error} = await sb.auth.resetPasswordForEmail(pending.target,{redirectTo:`${location.origin}${location.pathname}`});
+    if (error) throw new Error(error.message);
   }
   function openAck() {
     modal('Confirm your network',`<div class="border border-gold/30 rounded-xl p-4 bg-gold/5"><p class="font-semibold">You chose ${network} / ${network === 'BSC' ? 'BEP20' : 'TRC20'}.</p><p class="text-sm text-muted leading-relaxed mt-3">Select the SAME network in your ${page === 'invest' ? 'sending' : 'receiving'} wallet. Only ${page === 'invest' ? 'send' : 'receive'} USDT.</p><p class="text-red-300 text-sm mt-3">Wrong network = Money LOST forever. No refund.</p></div><button data-action="understand" class="${primary} w-full mt-5">I Understand</button>`);
@@ -410,7 +458,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (action === 'retry') { if (connected && authUser) return await sync(); return await initialize(); }
       if (action === 'logout') {
         const {error} = await sb.auth.signOut({scope:'local'}); if (error) throw error;
-        authUser = null; state = null; epoch++; drafts.clear(); authFlow = false; loading = false; screenError = ''; authError = ''; authMode = 'login'; authStep = 'details'; pending = null;
+        authUser = null; access = null; state = null; epoch++; drafts.clear(); authFlow = false; loading = false; screenError = ''; authError = ''; authMode = 'login'; authStep = 'details'; pending = null;
         status('Supabase authentication connected · Sign in to load your live account records.',true); render(); return;
       }
       if (action === 'resend') {
@@ -462,14 +510,14 @@ document.addEventListener('DOMContentLoaded', () => {
         authError = '';
         if (authMode === 'login') {
           authFlow = true;
-          const tokens = await edge('account-access',{identity:String(fd.get('identity')).trim(),password:fd.get('password')});
+          const tokens = await edge('account-access',{action:'login',identity:String(fd.get('identity')).trim(),password:fd.get('password')});
           const {data,error} = await sb.auth.setSession({access_token:tokens.access_token,refresh_token:tokens.refresh_token});
           if (error) throw error;
           pending = null; authFlow = false; await activate(data.session);
         } else {
           const normalizedPhone = phone(fd.get('phone')), name = String(fd.get('name')).trim(), email = String(fd.get('email')).trim().toLowerCase();
           if (!name) throw new Error('Enter your full name.');
-          if (!isPhone(normalizedPhone)) throw new Error('Enter an international phone number beginning with + and country code.');
+          if (normalizedPhone && !isPhone(normalizedPhone)) throw new Error('Enter an international phone number beginning with + and country code, or leave the optional phone field blank.');
           if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 254) throw new Error('Enter a valid email address to receive your verification code.');
           const referrer = query.get('ref');
           pending = {kind:'signup',method:'email',target:email,verified:false,metadata:{full_name:name,phone:normalizedPhone,country:fd.get('country'),password_ready:false,...(referrer && /^[0-9a-f-]{36}$/i.test(referrer) ? {referrer} : {})}};
@@ -489,10 +537,19 @@ document.addEventListener('DOMContentLoaded', () => {
           if (!data.session || !data.user) throw new Error('Supabase did not return a verified session.');
           pending.verified = true; authUser = data.user; authStep = 'password';
         }
-        const {error} = await sb.auth.updateUser({password:String(fd.get('password')),data:{password_ready:true}}); if (error) throw error;
         const {data:sessionData,error:sessionError} = await sb.auth.getSession(); if (sessionError) throw sessionError;
         if (!sessionData.session) throw new Error('Your verification session expired. Start verification again.');
-        pending = null; authFlow = false; authError = ''; authStep = 'details'; await activate(sessionData.session); if (state) toast('Your password is saved and your account is signed in.');
+        // Verify the existing role BEFORE changing a normal user's password.
+        const checked = await verifyAccess(sessionData.session.access_token);
+        if (checked.user_id !== sessionData.session.user.id) throw new Error('Account session validation failed.');
+        if (checked.role === 'admin') {
+          pending = null; authFlow = false; authError = ''; authStep = 'details'; await activate(sessionData.session);
+          if (state) toast('Admin Dashboard opened. Existing administrator credentials were not changed.'); return;
+        }
+        const {error} = await sb.auth.updateUser({password:String(fd.get('password')),data:{password_ready:true}}); if (error) throw error;
+        const {data:updatedSession,error:updatedError} = await sb.auth.getSession(); if (updatedError) throw updatedError;
+        if (!updatedSession.session) throw new Error('Your session expired. Sign in again.');
+        pending = null; authFlow = false; authError = ''; authStep = 'details'; await activate(updatedSession.session); if (state) toast('Your password is saved and your account is signed in.');
       } else {
         const u = me(); if (!u || u.banned) throw new Error('Your account is unavailable. Sign in again or contact Admin.');
         if (form.id === 'deposit-form') {
@@ -539,7 +596,7 @@ document.addEventListener('DOMContentLoaded', () => {
       console.error('Supabase operation failed:',error.message);
       if (isAuth) {
         authError = error.message || 'Unable to complete authentication.';
-        if (form.id === 'auth-form' && authMode === 'login') authFlow = false;
+        if (form.id === 'auth-form' && !pending?.verified) { authFlow = false; if (authMode === 'signup') pending = null; }
         if (pending?.verified) { authStep = 'password'; render(); }
         else {
           const errorElement = document.createElement('div'); errorElement.setAttribute('role','alert'); errorElement.className = 'rounded-xl border border-red-400/30 bg-red-400/5 p-4 mb-5 text-sm text-red-200 whitespace-pre-wrap'; errorElement.textContent = authError;
