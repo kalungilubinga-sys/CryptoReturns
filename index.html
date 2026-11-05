@@ -3,334 +3,429 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Crypto Returns | Your investment, in focus</title>
-<meta name="description" content="Manage your Crypto Returns account, investment requests, earnings, referrals, and support with live Supabase services.">
+<title>Crypto Returns | Watch Your Investments Grow</title>
+<meta name="description" content="Track your crypto returns, manage investment requests, and download the official Crypto Returns Android app.">
 <meta property="og:title" content="Crypto Returns">
-<meta property="og:description" content="Your investment, in focus. Manage investments, earnings, and support in one place.">
+<meta property="og:description" content="Watch Your Investments Grow. Track your returns and manage investment requests in one place.">
 <meta property="og:url" content="https://www.onspace.ai">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="OnSpace.AI">
-<!-- No social artwork was supplied; this image is only a sharing placeholder, not account data. -->
+<!-- Existing sharing placeholder; no social artwork was supplied. -->
 <meta property="og:image" content="https://placehold.co/1200x630/090d17/f5be4f?text=Crypto+Returns">
-<meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
-<meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="Crypto Returns">
-<meta name="twitter:description" content="Your investment, in focus. Manage investments, earnings, and support in one place.">
-<meta name="twitter:image" content="https://placehold.co/1200x630/090d17/f5be4f?text=Crypto+Returns"><meta name="twitter:url" content="https://www.onspace.ai">
-<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Crypto Returns">
+<meta name="twitter:description" content="Watch Your Investments Grow. Track your returns and manage investment requests in one place.">
+<meta name="twitter:image" content="https://placehold.co/1200x630/090d17/f5be4f?text=Crypto+Returns">
+<meta name="twitter:url" content="https://www.onspace.ai">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 <script src="https://cdn.tailwindcss.com"></script>
 <script>tailwind.config={theme:{extend:{colors:{ink:'#090d17',panel:'#111725',line:'#242c3c',gold:'#f5be4f',muted:'#a2aec3'},fontFamily:{sans:['DM Sans','sans-serif'],display:['Manrope','sans-serif']}}}};</script>
-<!-- The Supabase browser SDK is required for real authentication and database access. -->
+<!-- Public browser SDK; privileged credentials remain server-side. -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js" defer></script>
 </head>
-<body class="bg-ink text-slate-100 font-sans selection:bg-gold selection:text-ink [&_button]:transition-colors [&_button:disabled]:opacity-40 [&_button:disabled]:cursor-not-allowed [&_button]:focus-visible:outline [&_button]:focus-visible:outline-2 [&_button]:focus-visible:outline-gold [&_a]:focus-visible:outline [&_a]:focus-visible:outline-gold [&_input]:focus:border-gold [&_select]:focus:border-gold [&_textarea]:focus:border-gold">
+<body class="bg-ink text-slate-100 font-sans selection:bg-gold selection:text-ink [&_button]:transition-colors [&_button:disabled]:opacity-40 [&_button:disabled]:cursor-not-allowed [&_button]:focus-visible:outline [&_button]:focus-visible:outline-2 [&_button]:focus-visible:outline-gold [&_a]:focus-visible:outline [&_a]:focus-visible:outline-2 [&_a]:focus-visible:outline-gold [&_input]:focus:border-gold [&_select]:focus:border-gold [&_textarea]:focus:border-gold">
 <a href="#main" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:bg-gold focus:text-ink focus:p-3">Skip to content</a>
-<div id="connection-status" role="status" aria-live="polite" class="border-b border-line bg-panel px-4 py-2 text-center text-xs text-muted">Connecting to Supabase authentication…</div>
+<!-- Present in the initial HTML, with zero configured delay. No login or backend request is needed to show it. -->
+<div id="install-popup" role="dialog" aria-modal="true" aria-labelledby="install-title" aria-describedby="install-description" class="fixed inset-0 z-[100] flex items-center justify-center overflow-y-auto bg-black/80 p-4">
+  <section class="relative my-auto w-full max-w-md rounded-3xl border border-[#F0B90B]/30 bg-panel p-7 text-center shadow-2xl sm:p-9">
+    <button id="close-install" type="button" aria-label="Close app installation popup" class="absolute right-3 top-3 grid h-11 w-11 place-items-center rounded-xl text-muted hover:bg-white/5 hover:text-white"><i class="fa-solid fa-xmark text-xl" aria-hidden="true"></i></button>
+    <div class="mx-auto mb-6 mt-3 grid h-16 w-16 place-items-center rounded-2xl border border-[#F0B90B]/30 bg-[#F0B90B]/10 text-3xl text-[#F0B90B]"><i class="fa-solid fa-mobile-screen-button" aria-hidden="true"></i></div>
+    <p class="mb-3 text-[10px] font-semibold uppercase tracking-[.2em] text-[#F0B90B]">Official Android app</p>
+    <h2 id="install-title" class="font-display text-2xl font-extrabold leading-snug">Install Crypto Returns App</h2>
+    <p id="install-description" class="mb-7 mt-4 text-sm leading-relaxed text-muted">Install our official app to track your crypto returns easily.</p>
+    <a id="install-now" href="./app-release.apk" download="Crypto-Returns.apk" type="application/vnd.android.package-archive" class="flex min-h-12 w-full items-center justify-center rounded-xl bg-[#F0B90B] px-5 py-4 text-sm font-bold text-black transition-colors hover:bg-[#ffd344] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#F0B90B]">📱 INSTALL NOW</a>
+    <p class="mt-4 text-xs leading-relaxed text-muted">Android APK download. Open the downloaded file to install the app.</p>
+  </section>
+</div>
+<div id="connection-status" class="hidden" aria-hidden="true"></div>
 <div id="app"></div>
 <dialog id="modal" aria-labelledby="modal-title" class="w-[calc(100%-2rem)] max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl border border-line bg-panel p-6 text-slate-100 backdrop:bg-black/80">
-<div class="flex items-center justify-between mb-5"><h2 id="modal-title" class="font-display font-bold text-xl"></h2><button id="close-modal" aria-label="Close dialog" class="h-9 w-9 rounded-lg bg-white/5 hover:bg-white/10"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button></div><div id="modal-body"></div>
+  <div class="flex items-center justify-between gap-3 mb-5"><h2 id="modal-title" class="font-display font-bold text-xl"></h2><button id="close-modal" type="button" aria-label="Close dialog" class="grid h-11 w-11 shrink-0 place-items-center rounded-lg bg-white/5 hover:bg-white/10"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button></div>
+  <div id="modal-body"></div>
 </dialog>
 <div id="toast" role="status" aria-live="polite" class="hidden fixed bottom-24 lg:bottom-6 left-4 right-4 sm:left-auto sm:w-96 z-50 rounded-xl border border-gold/40 bg-panel px-5 py-4 shadow-2xl text-sm"></div>
-<noscript><p class="max-w-lg mx-auto p-8 text-amber-200">JavaScript is required to securely sign in and load your real account records.</p></noscript>
+<noscript><p class="max-w-lg mx-auto p-8 text-amber-200">JavaScript is required to securely sign in and load your account records. The Android download above is available without JavaScript.</p></noscript>
 <script>
 document.addEventListener('DOMContentLoaded', () => {
   'use strict';
-  // Only public Supabase connection details belong here. Private credentials are read by Edge Functions only.
   const URL_SUPABASE = 'https://epdufkwactntickyyofl.supabase.co';
   const PUBLIC_KEY = 'sb_publishable_xmjROXaDi7IY97etHGDR3g_YeTdQP4M';
   const $ = id => document.getElementById(id), day = 86400000;
   const input = 'w-full rounded-xl border border-line bg-ink px-4 py-3 text-sm outline-none text-slate-100';
-  const primary = 'rounded-xl bg-gold px-5 py-3 text-sm font-bold text-ink hover:bg-amber-300';
-  const secondary = 'rounded-xl border border-line px-4 py-3 text-sm font-medium hover:bg-white/5';
+  const primary = 'rounded-xl bg-gold px-5 py-3 text-sm font-bold text-ink hover:bg-amber-300 min-h-11';
+  const secondary = 'rounded-xl border border-line px-4 py-3 text-sm font-medium hover:bg-white/5 min-h-11';
   const card = 'rounded-2xl border border-line bg-panel';
-  const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  const icon = (n, extra = '') => `<i class="fa-solid fa-${n} ${extra}" aria-hidden="true"></i>`;
-  const money = value => new Intl.NumberFormat('en-US', { style:'currency', currency:'USD' }).format(Number(value));
-  const date = value => value ? new Date(value).toLocaleDateString(undefined, { month:'short', day:'numeric', year:'numeric' }) : 'Not approved';
+  const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const icon = (name,extra='') => `<i class="fa-solid fa-${name} ${extra}" aria-hidden="true"></i>`;
+  const money = value => new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'}).format(Number(value));
+  const date = value => value ? new Date(value).toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'}) : 'Not approved';
   const when = value => value ? new Date(value).toLocaleString() : '—';
-  const phone = value => String(value).trim().replace(/[\s()\-]/g, '');
+  const phone = value => String(value ?? '').trim().replace(/[\s()\-]/g,'');
   const isPhone = value => /^\+[1-9]\d{6,14}$/.test(value);
-  const validAddress = (network, address) => network === 'BSC' ? /^0x[a-fA-F0-9]{40}$/.test(address) : /^T[1-9A-HJ-NP-Za-km-z]{33}$/.test(address);
+  const validEmail = value => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value) && value.length <= 254;
+  const validAddress = (chain,address) => chain === 'BSC' ? /^0x[a-fA-F0-9]{40}$/.test(address) : /^T[1-9A-HJ-NP-Za-km-z]{33}$/.test(address);
+  const messageText = text => String(text || 'Unable to complete the request.').replace(/\bSupabase\b/gi,'account service');
   const query = new URLSearchParams(location.search), hashParams = new URLSearchParams(location.hash.slice(1));
   const initialRecovery = hashParams.get('type') === 'recovery' || query.get('type') === 'recovery';
-  let sb, settings = null, authUser = null, access = null, state = null, screenError = '', loading = true, connected = false;
-  let page = 'home', authMode = query.has('ref') ? 'signup' : 'login', authStep = 'details', authError = '', authFlow = false, pending = null;
-  let search = '', depositAmount = 100, network = 'BSC', ack = false, withdrawType = 'daily', busy = false, epoch = 0, syncJob = null, lastSync = null;
+  let sb, settings = null, authUser = null, access = null, state = null, connected = false, loading = false, screenError = '';
+  let page = 'home', authMode = query.has('ref') ? 'signup' : 'login', authStep = 'details', pending = null, authError = '', authFlow = false;
+  let search = '', depositAmount = 100, network = 'BSC', ack = false, withdrawType = 'daily', busy = false, epoch = 0, syncJob = null, needsRender = false;
+  let advertisements = [], advertError = '', advertJob = null;
+  const advertColumns = 'id,title,message,image_url,link_url,created_at';
   const drafts = new Map();
-  // Permanently discard the old prototype store. Supabase alone manages auth sessions.
-  try { localStorage.removeItem('cryptoReturnsPrototypeV1'); sessionStorage.removeItem('crSession'); } catch (_) { /* Browser storage may be restricted. */ }
   let broadcast;
-  try { broadcast = new BroadcastChannel('crypto-returns-live-refresh'); } catch (_) { /* Polling works without BroadcastChannel. */ }
+  try { localStorage.removeItem('cryptoReturnsPrototypeV1'); sessionStorage.removeItem('crSession'); broadcast = new BroadcastChannel('crypto-returns-live-refresh'); } catch (_) { /* Storage and cross-tab messaging may be unavailable. */ }
   const codes = 'AF AL DZ AS AD AO AI AG AR AM AW AU AT AZ BS BH BD BB BY BE BZ BJ BM BT BO BA BW BR BN BG BF BI KH CM CA CV KY CF TD CL CN CO KM CG CD CR CI HR CU CY CZ DK DJ DM DO EC EG SV GQ ER EE SZ ET FJ FI FR GA GM GE DE GH GI GR GD GT GN GW GY HT HN HK HU IS IN ID IR IQ IE IL IT JM JP JO KZ KE KI KW KG LA LV LB LS LR LY LI LT LU MO MG MW MY MV ML MT MH MR MU MX FM MD MC MN ME MA MZ MM NA NR NP NL NZ NI NE NG MK NO OM PK PW PA PG PY PE PH PL PT PR QA RO RU RW KN LC VC WS SM ST SA SN RS SC SL SG SK SI SB SO ZA KR SS ES LK SD SR SE CH SY TW TJ TZ TH TL TG TO TT TN TR TM TV UG UA AE GB US UY UZ VU VA VE VN YE ZM ZW'.split(' ');
-  const regions = typeof Intl.DisplayNames === 'function' ? new Intl.DisplayNames(['en'], { type:'region' }) : null;
+  const regions = typeof Intl.DisplayNames === 'function' ? new Intl.DisplayNames(['en'],{type:'region'}) : null;
   const countryName = code => regions ? regions.of(code) : code;
-  const me = () => access?.user_id === authUser?.id ? state?.users.find(u => u.id === authUser.id && u.role === access.role) : null;
-  const days = u => u.approved ? Math.max(0, Math.floor((Date.now() - new Date(u.approved).getTime()) / day)) : 0;
-  const capitalRate = u => u.approved && Date.now() <= new Date(u.approved).getTime() + 45 * day ? .50 : .35;
+  const me = () => authUser && access?.user_id === authUser.id ? state?.users.find(u => u.id === authUser.id && u.role === access.role) : null;
+  const findUser = id => state?.users.find(u => u.id === id);
+  const days = u => u.approved ? Math.max(0,Math.floor((Date.now()-new Date(u.approved).getTime())/day)) : 0;
+  const capitalRate = u => u.approved && Date.now() <= new Date(u.approved).getTime()+45*day ? .50 : .35;
   const matches = text => String(text).toLowerCase().includes(search.toLowerCase());
-  function countries(selected = 'UG') {
-    return codes.map(code => ({code, name:countryName(code)})).sort((a,b) => a.name.localeCompare(b.name)).map(c => `<option value="${c.code}" ${selected === c.code ? 'selected' : ''}>${esc(c.name)}</option>`).join('');
+  const secureUrl = value => {
+    if (!value) return '';
+    try { const parsed = new window.URL(String(value)); return parsed.protocol === 'https:' && !parsed.username && !parsed.password && parsed.href.length <= 2048 ? parsed.href : ''; }
+    catch (_) { return ''; }
+  };
+
+  // The install popup is already visible; closing and downloading do not require a backend session.
+  const installPopup = $('install-popup'), installClose = $('close-install'), oldOverflow = document.body.style.overflow;
+  const previousFocus = document.activeElement;
+  document.body.style.overflow = 'hidden'; $('app').inert = true;
+  function closeInstall() {
+    if (installPopup.classList.contains('hidden')) return;
+    installPopup.classList.add('hidden'); installPopup.setAttribute('aria-hidden','true');
+    $('app').inert = false; document.body.style.overflow = oldOverflow;
+    if (previousFocus?.isConnected && previousFocus !== document.body) previousFocus.focus();
+    else $('app').querySelector('a,button,input')?.focus();
+  }
+  installClose.addEventListener('click',closeInstall);
+  $('install-now').addEventListener('click',closeInstall);
+  installPopup.addEventListener('click',e => { if (e.target === installPopup) closeInstall(); });
+  document.addEventListener('keydown',e => {
+    if (installPopup.classList.contains('hidden')) return;
+    if (e.key === 'Escape') { e.preventDefault(); closeInstall(); }
+    if (e.key === 'Tab') {
+      const first = installClose, last = $('install-now');
+      if (![first,last].includes(document.activeElement)) { e.preventDefault(); first.focus(); }
+      else if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+    }
+  });
+  installClose.focus({preventScroll:true});
+  function downloadButton() {
+    return `<a href="./app-release.apk" download="Crypto-Returns.apk" type="application/vnd.android.package-archive" class="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-xl bg-[#F0B90B] px-4 py-3 text-xs font-bold text-black transition-colors hover:bg-[#ffd344] sm:text-sm">${icon('download')}Download App</a>`;
   }
   function toast(text) {
-    $('toast').textContent = text; $('toast').classList.remove('hidden'); clearTimeout(toast.timer);
-    toast.timer = setTimeout(() => $('toast').classList.add('hidden'), 6500);
+    $('toast').textContent = messageText(text); $('toast').classList.remove('hidden'); clearTimeout(toast.timer);
+    toast.timer = setTimeout(() => $('toast').classList.add('hidden'),6500);
   }
-  function status(text, good = false) {
-    $('connection-status').textContent = text;
-    $('connection-status').className = `${text ? '' : 'hidden '}border-b px-4 py-2 text-center text-xs ${good ? 'border-emerald-400/20 bg-emerald-400/5 text-emerald-200' : 'border-amber-400/20 bg-amber-400/5 text-amber-200'}`;
+  function modal(title,content) {
+    $('modal-title').textContent = title; $('modal-body').innerHTML = content;
+    if (!$('modal').open) $('modal').showModal();
+  }
+  $('close-modal').addEventListener('click',() => { if (!busy) $('modal').close(); });
+  $('modal').addEventListener('cancel',e => { if (busy) e.preventDefault(); });
+  async function copy(text) {
+    try { await navigator.clipboard.writeText(text); toast('Copied to clipboard.'); }
+    catch (_) { modal('Copy manually',`<p class="text-sm text-muted mb-3">Select and copy this value.</p><textarea readonly class="${input}" rows="3">${esc(text)}</textarea>`); }
+  }
+  function brand() {
+    return `<div class="flex items-center gap-3"><span class="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-gold text-ink text-lg">${icon('chart-simple')}</span><span class="font-display font-extrabold text-lg tracking-tight">Crypto<span class="text-gold">Returns</span><span class="block text-[9px] tracking-[.26em] text-muted font-medium uppercase">A clearer view of your crypto</span></span></div>`;
+  }
+  function heading(title,sub,extra='') {
+    return `<div class="flex flex-wrap items-center justify-between gap-4 mb-7"><div><h1 class="font-display text-2xl md:text-3xl font-bold tracking-tight">${title}</h1><p class="text-sm text-muted mt-2 leading-relaxed">${sub}</p></div>${extra}</div>`;
+  }
+  function badge(value) {
+    return `<span class="inline-block h-fit rounded-md px-2 py-1 text-[10px] font-semibold uppercase tracking-wide ${value === 'pending' ? 'bg-amber-400/10 text-amber-300' : value === 'approved' ? 'bg-emerald-400/10 text-emerald-300' : 'bg-red-400/10 text-red-300'}">${esc(value)}</span>`;
+  }
+  function empty(text) { return `<div class="py-10 px-4 text-center text-muted text-sm">${icon('inbox','block text-2xl text-slate-500 mb-3')}${text}</div>`; }
+  function countries(selected='UG') {
+    return codes.map(code => ({code,name:countryName(code)})).sort((a,b) => a.name.localeCompare(b.name)).map(c => `<option value="${c.code}" ${selected === c.code ? 'selected' : ''}>${esc(c.name)}</option>`).join('');
+  }
+  function searchBox(placeholder) {
+    return `<label class="flex items-center gap-3 ${card} px-4 mb-6">${icon('magnifying-glass','text-muted')}<input id="search" type="search" value="${esc(search)}" aria-label="${esc(placeholder)}" placeholder="${esc(placeholder)}" class="bg-transparent py-3.5 text-sm outline-none w-full"></label>`;
   }
   let passwordFieldId = 0;
-  // Add accessible visibility controls to each dynamically rendered password field.
   function enhancePasswordFields() {
     document.querySelectorAll('#app input[type="password"]').forEach(field => {
       if (field.dataset.visibilityControl) return;
-      field.dataset.visibilityControl = 'true';
-      if (!field.id) field.id = `password-field-${++passwordFieldId}`;
-      const wrapper = document.createElement('span');
-      wrapper.className = 'relative block mt-2';
-      field.before(wrapper);
-      wrapper.appendChild(field);
-      field.classList.remove('mt-2');
-      field.classList.add('pr-12');
-      const control = document.createElement('button');
-      control.type = 'button';
-      control.dataset.action = 'toggle-password';
-      control.dataset.target = field.id;
+      field.dataset.visibilityControl = 'true'; if (!field.id) field.id = `password-field-${++passwordFieldId}`;
+      const wrapper = document.createElement('span'); wrapper.className = 'relative block mt-2';
+      field.before(wrapper); wrapper.appendChild(field); field.classList.remove('mt-2'); field.classList.add('pr-12');
+      const control = document.createElement('button'); control.type = 'button'; control.dataset.action = 'toggle-password'; control.dataset.target = field.id;
       control.className = 'absolute inset-y-0 right-1 grid w-11 place-items-center rounded-lg text-muted hover:text-gold focus-visible:outline focus-visible:outline-2 focus-visible:outline-gold';
-      control.setAttribute('aria-label', 'Show password');
-      control.setAttribute('aria-controls', field.id);
-      control.setAttribute('aria-pressed', 'false');
-      control.title = 'Show password';
-      control.innerHTML = icon('eye');
-      wrapper.appendChild(control);
+      control.setAttribute('aria-label','Show password'); control.setAttribute('aria-controls',field.id); control.setAttribute('aria-pressed','false'); control.title = 'Show password'; control.innerHTML = icon('eye'); wrapper.appendChild(control);
     });
   }
-  function modal(title, content) { $('modal-title').textContent = title; $('modal-body').innerHTML = content; if (!$('modal').open) $('modal').showModal(); }
-  $('close-modal').onclick = () => { if (!busy) $('modal').close(); };
-  $('modal').addEventListener('cancel', e => { if (busy) e.preventDefault(); });
-  async function copy(text) {
-    try { await navigator.clipboard.writeText(text); toast('Copied to clipboard.'); }
-    catch (_) { modal('Copy manually', `<p class="text-sm text-muted mb-3">Select and copy this value.</p><textarea readonly class="${input}" rows="3">${esc(text)}</textarea>`); }
-  }
-  function brand() {
-    return `<div class="flex items-center gap-3"><span class="grid h-10 w-10 place-items-center rounded-xl bg-gold text-ink text-lg">${icon('chart-simple')}</span><span class="font-display font-extrabold text-lg tracking-tight">Crypto<span class="text-gold">Returns</span><span class="block text-[9px] tracking-[.26em] text-muted font-medium uppercase">A clearer view of your crypto</span></span></div>`;
-  }
-  function heading(title, sub, extra = '') {
-    return `<div class="flex flex-wrap items-center justify-between gap-4 mb-7"><div><h1 class="font-display text-2xl md:text-3xl font-bold tracking-tight">${title}</h1><p class="text-sm text-muted mt-2">${sub}</p></div>${extra}</div>`;
-  }
-  function badge(value) {
-    return `<span class="inline-block rounded-md px-2 py-1 text-[10px] font-semibold uppercase tracking-wide ${value === 'pending' ? 'bg-amber-400/10 text-amber-300' : value === 'approved' ? 'bg-emerald-400/10 text-emerald-300' : 'bg-red-400/10 text-red-300'}">${esc(value)}</span>`;
-  }
-  function empty(text) { return `<div class="py-10 px-4 text-center text-muted text-sm">${icon('inbox','block text-2xl text-slate-500 mb-3')}${text}</div>`; }
-  function formError() { return authError ? `<div role="alert" class="rounded-xl border border-red-400/30 bg-red-400/5 p-4 mb-5 text-sm text-red-200 whitespace-pre-wrap">${esc(authError)}</div>` : ''; }
-  function passwordField() { return `<label class="block text-sm">${authMode === 'login' ? 'Password' : 'Create your password'}<input required type="password" name="password" ${authMode === 'login' ? '' : 'minlength="8"'} maxlength="1024" autocomplete="${authMode === 'login' ? 'current-password' : 'new-password'}" class="${input} mt-2" placeholder="${authMode === 'login' ? 'Enter your password' : 'At least 8 characters'}"></label>`; }
-  function authContent() {
-    if (pending?.kind === 'admin-recovery' && authStep === 'verify') {
-      return `<div class="flex items-center gap-2 text-xs text-gold mb-5">${icon('shield-halved')}ADMINISTRATOR RECOVERY</div><h2 class="font-display font-bold text-2xl">Recover your administrator login</h2><p class="text-muted text-sm mt-3 mb-6 leading-relaxed">Enter the recovery code from your previous inbox, <span class="text-slate-100 break-all">${esc(pending.target)}</span>, and choose your new login details. Your old password is not required.</p>${formError()}<form id="verify-form" class="space-y-4"><label class="block text-sm">Recovery code from previous email<input required name="code" type="text" inputmode="numeric" pattern="[0-9]{4,10}" maxlength="10" autocomplete="one-time-code" class="${input} mt-2 tracking-widest" placeholder="Code from your previous inbox"></label><label class="block text-sm">New administrator email<input required type="email" name="email" maxlength="254" autocomplete="email" class="${input} mt-2" placeholder="Your new email address"></label><label class="block text-sm">New administrator password<input required type="password" name="password" minlength="8" maxlength="1024" autocomplete="new-password" class="${input} mt-2" placeholder="Choose a new password, at least 8 characters"></label><label class="block text-sm">Confirm new password<input required type="password" name="confirm_password" minlength="8" maxlength="1024" autocomplete="new-password" class="${input} mt-2" placeholder="Repeat your new password"></label><div class="rounded-xl border border-gold/25 bg-gold/5 p-4 text-xs text-muted leading-relaxed">The server verifies your recovery code and existing administrator role before updating this account. Your password changes after a successful save. Confirm any email-change instructions sent by Supabase to your previous and new inboxes; until confirmed, use your previous email and new password. Choose a password you have not shared in chat.</div><button class="${primary} w-full" ${!connected ? 'disabled' : ''}>Recover administrator login ${icon('shield-halved','ml-2')}</button></form><button data-action="resend" class="text-sm text-gold mt-5 hover:underline">Resend recovery code</button><p class="text-xs text-muted mt-4 leading-relaxed">Use the latest code. If the email contains only a link, the project owner must add <code class="text-gold">${esc('{{ .Token }}')}</code> to Supabase → Authentication → Email Templates → Reset Password. Changing wallet settings does not configure recovery emails.</p><p class="text-xs text-muted mt-4 leading-relaxed">No account is created. Your administrator role, phone number, balances, and history remain unchanged.</p><button data-action="auth-back" class="block text-sm text-muted mt-5 hover:text-white">Back to sign in</button>`;
-    }
-    if (authStep === 'verify' || authStep === 'password') {
-      const signup = pending?.kind === 'signup', verified = authStep === 'password';
-      return `${signup ? '<div class="flex items-center gap-3 text-xs text-muted mb-6"><span class="text-emerald-300">1. Account details</span><span aria-hidden="true">/</span><span class="text-gold">2. Email code & password</span></div>' : ''}<h2 class="font-display font-bold text-2xl">${verified ? 'Create your password' : 'Check your email'}</h2><p class="text-muted text-sm mt-3 mb-6 leading-relaxed">${verified ? 'Your email is verified. Save your password to finish.' : `Enter the verification code sent to <span class="text-slate-100 break-all">${esc(pending?.target || '')}</span>, then ${signup ? 'create' : 'reset'} your password.`}</p>${formError()}<form id="verify-form" class="space-y-4">${!verified ? `<label class="block text-sm">Email verification code<input required name="code" type="text" inputmode="numeric" pattern="[0-9]{4,10}" maxlength="10" autocomplete="one-time-code" class="${input} mt-2 tracking-widest" placeholder="Code from your email"></label>` : ''}${passwordField()}<button class="${primary} w-full">${verified ? 'Save password & continue' : signup ? 'Verify email & create account' : 'Verify code & reset password'} ${icon('arrow-right','ml-2')}</button></form>${!verified ? `<button data-action="resend" class="text-sm text-gold mt-5 hover:underline">Resend email code</button><p class="text-xs text-muted mt-4 leading-relaxed">Check your spam folder. Use the latest code; expired or incorrect codes are rejected by Supabase. If your email contains only a link, contact Admin to enable code emails.</p>` : ''}${signup ? '<p class="text-xs text-muted mt-4 leading-relaxed">Verify once when creating your account. Afterwards, sign in with your email or phone number and password—no code needed for normal login.</p>' : ''}<button data-action="auth-back" class="block text-sm text-muted mt-5 hover:text-white">Back to sign in</button>`;
-    }
-    if (authMode === 'recovery' || authMode === 'admin-recovery') {
-      const administrator = authMode === 'admin-recovery';
-      return `${administrator ? `<div class="flex items-center gap-2 text-xs text-gold mb-5">${icon('shield-halved')}ADMINISTRATOR RECOVERY</div>` : ''}<h2 class="font-display font-bold text-2xl">${administrator ? 'Forgot your administrator login?' : 'Reset your password'}</h2><p class="text-muted text-sm mt-3 mb-6 leading-relaxed">${administrator ? 'Use the email address on your existing administrator account. You must be able to receive its recovery code. You can then set a new email and password without knowing the old password.' : 'Enter the email address verified when you created your account.'}</p>${formError()}<form id="recovery-form" class="space-y-4"><label class="block text-sm">${administrator ? 'Previous administrator email' : 'Verified email address'}<input required type="email" name="identity" maxlength="254" autocomplete="email" class="${input} mt-2" placeholder="you@example.com"></label><button class="${primary} w-full" ${!connected ? 'disabled' : ''}>Send email recovery code ${icon('arrow-right','ml-2')}</button></form>${administrator ? '<p class="text-xs text-muted mt-5 leading-relaxed">This restores the same administrator account, not a new one. The recovery code proves inbox access; the protected administrator role is checked on the server.</p>' : ''}<button data-action="auth-back" class="block text-sm text-muted mt-5 hover:text-white">Back to sign in</button>`;
-    }
-    const signup = authMode === 'signup';
-    return `<div class="flex gap-5 border-b border-line mb-7"><button data-action="auth-mode" data-value="login" class="pb-4 text-sm ${!signup ? 'text-gold border-b-2 border-gold' : 'text-muted'}">Sign in</button><button data-action="auth-mode" data-value="signup" class="pb-4 text-sm ${signup ? 'text-gold border-b-2 border-gold' : 'text-muted'}">Create account</button></div>${signup ? '<div class="flex items-center gap-3 text-xs text-muted mb-5"><span class="text-gold">1. Account details</span><span aria-hidden="true">/</span><span>2. Email code & password</span></div>' : ''}<h2 class="font-display font-bold text-2xl">${signup ? 'Create your account' : 'Welcome back'}</h2><p class="text-muted text-sm mt-2 mb-6 leading-relaxed">${signup ? 'Enter your details to receive an email verification code. Create your password in the next step.' : 'Sign in with your existing password. The server verifies your permissions and opens the correct dashboard. Administrator accounts open only the Admin Dashboard.'}</p>${formError()}<form id="auth-form" class="space-y-4">${signup ? `<label class="block text-sm">Email address<input required type="email" name="email" maxlength="254" autocomplete="email" class="${input} mt-2" placeholder="you@example.com"></label><label class="block text-sm">Full name<input required name="name" maxlength="120" autocomplete="name" class="${input} mt-2" placeholder="Your full name"></label><label class="block text-sm">Country<select name="country" class="${input} mt-2">${countries()}</select></label><label class="block text-sm">Phone number <span class="text-muted">(optional)</span><input type="tel" name="phone" maxlength="30" autocomplete="tel" class="${input} mt-2" placeholder="+256 700 000 000"></label><p class="text-xs text-muted leading-relaxed">Register with your own email address. If you add a phone number, use your international country code and a number not registered to another account. Verification uses email codes only. Existing administrators should sign in, not create another account.</p>` : `<label class="block text-sm">Email or international phone<input required name="identity" maxlength="254" autocomplete="username" class="${input} mt-2" placeholder="you@example.com or +256…"></label>${passwordField()}<div class="flex flex-wrap justify-between gap-3"><button type="button" data-action="forgot" class="text-xs text-gold hover:underline">Forgot password?</button></div>`}<button class="${primary} w-full" ${!connected || (signup && settings?.external?.email === false) ? 'disabled' : ''}>${signup ? 'Get verification code' : 'Sign in'} ${icon('arrow-right','ml-2')}</button></form><div class="border-t border-line mt-6 pt-5 flex items-start gap-3 text-xs text-muted leading-relaxed">${icon('shield-halved','text-gold mt-0.5')}<p>Supabase secures your account. Email verification is required once at signup, not on each login. New accounts start at zero until real deposits are approved.${settings?.external?.email === false ? '<br><span class="text-amber-200">Email authentication is disabled. Ask Admin to enable the Email provider in Supabase.</span>' : ''}</p></div>`;
-  }
-  function auth() {
-    $('app').innerHTML = `<div class="max-w-7xl mx-auto px-5 md:px-10"><header class="py-7 flex justify-between items-center">${brand()}<span class="hidden sm:block text-sm text-muted">Built for a global community ${icon('globe','ml-2 text-gold')}</span></header><main id="main" class="grid lg:grid-cols-[1.15fr_1fr] items-center gap-12 lg:gap-24 py-8 lg:py-14"><section><div class="inline-flex items-center gap-2 rounded-full border border-gold/25 bg-gold/5 px-3 py-1.5 text-xs text-gold"><span class="w-1.5 h-1.5 rounded-full bg-gold"></span>YOUR CRYPTO. ONE CLEAR VIEW.</div><h1 class="font-display text-4xl sm:text-5xl xl:text-6xl font-extrabold tracking-tight leading-[1.15] mt-7">Watch Your<br>Investments <span class="text-gold">Grow.</span></h1><p class="max-w-md text-muted leading-relaxed mt-6">See your profits, track your returns, and enjoy seamless investment liquidation. Stay informed about your earnings and take control of every investment opportunity with confidence.</p><div class="grid grid-cols-2 gap-4 max-w-md mt-8"><div class="${card} p-5"><span class="text-gold">${icon('wallet')}</span><p class="font-display font-bold mt-4">Two networks.</p><p class="text-xs text-muted mt-2">USDT · BEP20 / TRC20</p></div><div class="${card} p-5"><span class="text-gold">${icon('database')}</span><p class="font-display font-bold mt-4">Real records.</p><p class="text-xs text-muted mt-2">Your authenticated account</p></div></div></section><section class="${card} p-6 sm:p-9">${authContent()}</section></main><footer class="border-t border-line py-6 text-xs text-muted flex justify-between"><span>© ${new Date().getFullYear()} Crypto Returns</span><span>USDT · BEP20 · TRC20</span></footer></div>`;
-    enhancePasswordFields();
-  }
-  function renderError() {
-    $('app').innerHTML = `<div class="max-w-3xl mx-auto px-5 py-8"><header>${brand()}</header><main id="main" class="${card} p-7 sm:p-10 mt-12"><div class="w-12 h-12 rounded-xl bg-red-400/10 text-red-300 grid place-items-center text-xl">${icon('plug-circle-exclamation')}</div><h1 class="font-display text-2xl font-bold mt-5">Unable to load live services</h1><p class="text-sm text-muted mt-3 leading-relaxed">No demonstration records or substitute balances are displayed. Check the error below and retry.</p><div role="alert" class="rounded-xl border border-red-400/25 bg-ink p-4 mt-5 text-sm text-red-200 break-words whitespace-pre-wrap">${esc(screenError)}</div><div class="flex flex-wrap gap-3 mt-6"><button data-action="retry" class="${primary}">Retry connection</button>${authUser ? `<button data-action="logout" class="${secondary}">Sign out</button>` : ''}</div></main></div>`;
-  }
-  function renderLoading() { $('app').innerHTML = `<main id="main" class="max-w-xl mx-auto px-5 py-20 text-center">${brand()}<div class="mt-12 text-gold">${icon('circle-notch','text-2xl motion-safe:animate-spin')}</div><h1 class="font-display text-xl font-bold mt-5">${authUser ? 'Loading your live account' : 'Connecting securely'}</h1><p class="text-sm text-muted mt-3">Retrieving records from your connected Supabase project.</p></main>`; }
-  const userNav = [['home','house','Home','See money'],['invest','arrow-trend-up','Invest','Put money'],['withdraw','wallet','Withdraw','Take money'],['referral','user-group','Referral','Invite'],['account','circle-user','Account','Help']];
-  const adminNav = [['home','chart-pie','Overview','Platform activity'],['users','users','Users','Manage accounts'],['deposits','arrow-down','Deposits','Review requests'],['withdrawals','arrow-up','Withdrawals','Pending only'],['referral','user-group','Referrals','Track invitations'],['account','headset','Customer care','Messages'],['history','clock-rotate-left','History','Processed requests'],['settings','sliders','Settings','Deposit wallets']];
-  function hasUnread(u) { return state.messages.some(m => u.role === 'admin' ? m.unread_admin : m.user_id === u.id && m.unread_user); }
-  function dot(u) { return hasUnread(u) ? '<span class="ml-auto h-2 w-2 rounded-full bg-gold"></span>' : ''; }
-  function render() {
-    if (screenError) return renderError();
-    if (loading && !state) return renderLoading();
-    const u = me(); if (!u) return auth();
-    const admin = access.role === 'admin', nav = admin ? adminNav : userNav;
-    $('app').innerHTML = `<div class="lg:flex min-h-[calc(100vh-33px)]"><aside class="hidden lg:flex w-64 shrink-0 border-r border-line flex-col px-5 py-7 bg-[#0c111d]">${brand()}<div class="mt-10 mb-3 px-3 text-[10px] tracking-[.18em] text-muted">${admin ? 'ADMIN WORKSPACE' : 'YOUR WORKSPACE'}</div><nav aria-label="Workspace navigation" class="space-y-2">${nav.map(([id,i,title,sub]) => `<button data-action="nav" data-value="${id}" ${page === id ? 'aria-current="page"' : ''} class="w-full flex gap-3 items-center rounded-xl p-3 text-left ${page === id ? 'bg-gold/10 text-gold' : 'text-muted hover:bg-white/5 hover:text-white'}">${icon(i,'w-5')}<span><span class="block text-sm font-semibold">${title}</span><span class="block text-[11px] mt-0.5">${sub}</span></span>${id === 'account' ? dot(u) : ''}</button>`).join('')}</nav><div class="mt-auto pt-12"><div class="rounded-xl border border-line p-4"><div class="text-gold text-sm mb-2">${icon('circle-info','mr-2')}Need a hand?</div><p class="text-muted text-xs leading-relaxed">Your private support conversation is one click away.</p><button data-action="nav" data-value="account" class="text-xs mt-3 font-bold hover:text-gold">${admin ? 'Open customer care' : 'Contact support'} ${icon('arrow-right','ml-2')}</button></div><button data-action="logout" class="mt-5 flex items-center gap-3 text-sm text-muted hover:text-white p-3">${icon('right-from-bracket')}Sign out</button></div></aside><div class="min-w-0 flex-1"><header class="border-b border-line px-5 md:px-8 lg:px-10 py-5 flex items-center justify-between gap-4"><div class="lg:hidden">${brand()}</div><div class="hidden lg:flex gap-2 items-center text-xs text-muted">Workspace ${icon('chevron-right','text-[9px] mx-2')}<span class="text-slate-200">${nav.find(n => n[0] === page)?.[2] || 'Overview'}</span></div><div class="flex items-center gap-3"><span class="hidden sm:inline text-xs text-muted">${icon('globe','mr-2')}${esc(countryName(u.country))} <span class="mx-2 text-line">|</span> USD</span><button data-action="refresh" aria-label="Refresh live records" class="h-9 w-9 rounded-xl border border-line hover:bg-white/5">${icon('rotate')}</button><button data-action="nav" data-value="account" aria-label="Open messages" class="relative h-9 w-9 rounded-xl border border-line hover:bg-white/5">${icon('bell')}${hasUnread(u) ? '<span class="absolute right-1.5 top-1 h-1.5 w-1.5 bg-gold rounded-full"></span>' : ''}</button><span class="hidden sm:grid place-items-center w-9 h-9 rounded-full bg-gold/15 text-gold text-xs font-bold">${esc(u.name.split(' ').filter(Boolean).map(n => n[0]).join('').slice(0,2))}</span></div></header>${admin ? `<nav aria-label="Admin navigation" class="lg:hidden flex gap-2 overflow-x-auto px-5 pt-4">${nav.map(n => `<button class="shrink-0 px-3 py-2 rounded-lg text-sm ${page === n[0] ? 'bg-gold text-ink' : 'border border-line'}" data-action="nav" data-value="${n[0]}">${n[2]}</button>`).join('')}</nav>` : ''}<main id="main" class="max-w-[1440px] mx-auto px-5 md:px-8 lg:px-10 pt-8 pb-28 lg:pb-8">${content(u)}</main><footer class="hidden lg:flex border-t border-line px-10 py-5 text-[11px] text-muted justify-between"><span>© ${new Date().getFullYear()} Crypto Returns</span><span>Live account records · Auto-refresh every 10 seconds</span></footer></div></div>${!admin ? `<nav aria-label="Main navigation" class="lg:hidden fixed bottom-0 inset-x-0 z-30 bg-[#0c111d] border-t border-line flex justify-around px-1 pt-3 pb-[max(1.25rem,env(safe-area-inset-bottom))]">${userNav.map(n => `<button data-action="nav" data-value="${n[0]}" ${page === n[0] ? 'aria-current="page"' : ''} class="w-1/5 flex flex-col items-center gap-1.5 text-[10px] ${page === n[0] ? 'text-gold' : 'text-muted'}">${icon(n[1],'text-base')}<span>${n[2]}</span></button>`).join('')}</nav>` : ''}`;
-    enhancePasswordFields(); restoreDrafts(); updateWithdrawalPreview();
+  function captureDraft(field) {
+    const form = field.closest('form[data-draft]');
+    if (!form || !field.name || field.readOnly || field.type === 'password' || field.dataset.visibilityControl) return;
+    drafts.set(form.dataset.draft,{...(drafts.get(form.dataset.draft)||{}),[field.name]:field.value});
   }
   function restoreDrafts() {
     document.querySelectorAll('form[data-draft]').forEach(form => {
-      const values = drafts.get(form.dataset.draft); if (!values) return;
-      for (const [name,value] of Object.entries(values)) {
-        const field = form.elements.namedItem(name); if (field && !field.readOnly && field.type !== 'password' && !field.dataset.visibilityControl) field.value = value;
+      for (const [name,value] of Object.entries(drafts.get(form.dataset.draft)||{})) {
+        const field = form.elements.namedItem(name);
+        if (field && !field.readOnly && field.type !== 'password' && !field.dataset.visibilityControl) field.value = value;
       }
     });
   }
-  function chart() {
-    const records = [...state.ledger].sort((a,b) => new Date(a.accrual_at) - new Date(b.accrual_at));
-    if (!records.length) return empty('No earnings have been posted yet. Your actual accrual history will appear here.');
-    let cumulative = 0;
-    const points = records.map(r => ({ amount:(cumulative += Number(r.amount)), at:r.accrual_at })).slice(-14);
-    const low = points[0].amount, high = points[points.length - 1].amount;
-    const coords = points.map((p,i) => ({x:points.length === 1 ? 280 : i * 560 / (points.length - 1), y:high === low ? 70 : 110 - (p.amount - low) / (high - low) * 85}));
-    const path = coords.map((p,i) => `${i ? 'L' : 'M'}${p.x.toFixed(2)} ${p.y.toFixed(2)}`).join(' ');
-    return `<div class="flex justify-between text-xs text-muted mt-5"><span>Cumulative posted earnings</span><span class="text-gold">${money(high)}</span></div><svg viewBox="0 0 560 145" class="w-full h-44 mt-4" role="img" aria-label="Cumulative earnings from your actual server accrual ledger; withdrawals are not subtracted"><path d="M0 25H560M0 65H560M0 105H560" stroke="#242c3c" stroke-dasharray="4 5"/><path d="${path}" stroke="#f5be4f" stroke-width="2.5" fill="none"/>${coords.map(p => `<circle cx="${p.x.toFixed(2)}" cy="${p.y.toFixed(2)}" r="3" fill="#f5be4f"/>`).join('')}</svg><div class="flex justify-between text-[10px] text-muted"><span>${date(points[0].at)}</span><span>${date(points[points.length - 1].at)}</span></div>`;
+
+  // Public adverts are stationary and escaped. Advert refreshes never replace login or editor fields.
+  function advertCard(advert,admin=false) {
+    const image = secureUrl(advert.image_url), link = secureUrl(advert.link_url);
+    return `<article class="${card} overflow-hidden h-full">${image ? `<img data-advert-image src="${esc(image)}" alt="Announcement image for ${esc(advert.title)}" loading="lazy" decoding="async" width="640" height="320" class="h-44 sm:h-48 w-full max-w-full object-contain bg-ink">` : ''}<div class="p-5 sm:p-6"><div class="flex items-start justify-between gap-3"><div class="min-w-0"><p class="text-[10px] font-semibold uppercase tracking-[.16em] text-gold mb-3">Crypto Returns announcement</p><h3 class="font-display text-lg font-bold leading-snug break-words">${esc(advert.title)}</h3></div>${admin ? `<button type="button" data-action="delete-advert" data-id="${esc(advert.id)}" aria-label="Remove announcement: ${esc(advert.title)}" class="grid min-h-11 min-w-11 shrink-0 place-items-center rounded-lg border border-line text-red-300 hover:bg-red-400/10">${icon('trash-can')}</button>` : ''}</div><p class="mt-3 text-sm leading-relaxed text-muted whitespace-pre-wrap break-words">${esc(advert.message)}</p>${link ? `<a href="${esc(link)}" target="_blank" rel="noopener noreferrer" class="inline-flex min-h-11 items-center gap-2 mt-4 text-sm font-semibold text-gold hover:underline">Learn more ${icon('arrow-up-right-from-square','text-xs')}</a>` : ''}${admin ? `<p class="mt-4 text-[11px] text-muted">Published ${esc(when(advert.created_at))} · Visible to everyone</p>` : ''}</div></article>`;
   }
-  function home(u) {
-    const today = new Date().toISOString().slice(0,10), postedToday = state.ledger.filter(r => r.accrual_at.slice(0,10) === today).reduce((s,r) => s + Number(r.amount), 0);
-    const next = u.capital > 0 && u.lastAccrual ? new Date(new Date(u.lastAccrual).getTime() + day).toISOString() : null;
-    return heading(`Welcome back, ${esc(u.name.split(' ')[0])}<span class="text-gold">.</span>`, 'Your actual balances and account activity, in one place.', `<button data-action="nav" data-value="invest" class="${primary}">${icon('plus','mr-2')}New investment</button>`) + `<div class="grid md:grid-cols-2 xl:grid-cols-3 gap-5"><section class="${card} p-6"><div class="flex justify-between items-center"><span class="text-sm text-muted">My investment</span><span class="w-10 h-10 rounded-xl grid place-items-center bg-gold/10 text-gold">${icon('layer-group')}</span></div><p class="font-display text-4xl font-bold tracking-tight mt-5">${money(u.capital)}</p><div class="flex items-center gap-2 mt-5 text-xs text-muted"><span class="w-1.5 h-1.5 bg-gold rounded-full"></span>Approved capital <span class="ml-auto border border-line rounded px-2 py-1">Separate balance</span></div></section><section class="${card} p-6"><div class="flex justify-between items-center"><span class="text-sm text-muted">My daily earnings</span><span class="w-10 h-10 rounded-xl grid place-items-center bg-emerald-400/10 text-emerald-400">${icon('arrow-trend-up')}</span></div><p class="font-display text-4xl font-bold tracking-tight mt-5 text-emerald-400">${money(u.earnings)}</p><div class="mt-5 flex justify-between text-xs text-muted"><span>Posted today (UTC)</span><span class="text-emerald-300">${money(postedToday)}</span></div></section><section class="${card} p-6 md:col-span-2 xl:col-span-1"><div class="flex justify-between items-center"><span class="text-sm text-muted">Next calculation · estimate</span><span class="w-10 h-10 rounded-xl grid place-items-center bg-blue-400/10 text-blue-300">${icon('clock')}</span></div><p class="font-display text-4xl font-bold tracking-tight mt-5">${money(u.capital > 0 ? (u.capital + u.earnings) * .025 : 0)}</p><div class="flex justify-between mt-5 text-xs text-muted"><span>${days(u)} days active</span><span class="text-blue-300">2.5% configured rate</span></div></section></div><div class="grid xl:grid-cols-[1.65fr_1fr] gap-5 mt-6"><section class="${card} p-6"><h2 class="font-display font-semibold">Your earnings history</h2><p class="text-xs text-muted mt-1.5">Actual server postings · up to 14 most recent accruals</p>${chart()}<p class="text-xs text-muted mt-5 leading-relaxed">${next ? `Next full 24-hour period ends ${esc(when(next))}. The server checks eligible accounts hourly; the estimate is not part of your balance until posted.` : 'Daily accrual starts after approval of a real deposit. No active capital means no daily compounding.'}</p></section><section class="${card} p-6"><span class="text-[10px] text-gold tracking-[.18em]">GROW YOUR COMMUNITY</span><h2 class="font-display font-bold text-2xl mt-4">Good things are<br>better shared.</h2><p class="text-sm leading-relaxed text-muted mt-4">Invite a friend. You receive <span class="text-white">$5</span> and they receive <span class="text-white">$2.50</span> after their first approved deposit.</p><div class="rounded-xl border border-line p-4 my-6 text-xs text-muted leading-relaxed">Rewards are credited to your earnings balance once. Submitting a deposit is not the same as approval.</div><button data-action="nav" data-value="referral" class="${secondary} w-full text-gold">Invite a friend ${icon('arrow-right','ml-2')}</button></section></div><section class="${card} mt-6"><div class="flex justify-between p-6 border-b border-line"><h2 class="font-display font-semibold">Recent activity</h2><button data-action="nav" data-value="withdraw" class="text-xs text-gold">View requests ${icon('arrow-right','ml-1')}</button></div>${activity(u)}</section><div class="flex items-start gap-3 rounded-xl bg-white/[.02] px-4 py-4 mt-5 text-xs text-muted leading-relaxed">${icon('circle-info','mt-0.5 text-gold')}<p>Balances reflect database records, not independently verified wallet reserves. Crypto investment is high risk; the configured rate is not a guarantee of returns or payment.</p></div>`;
+  function advertHomeContent() {
+    if (!advertisements.length) return advertError ? `<div role="alert" class="${card} mb-6 flex flex-wrap items-center justify-between gap-3 p-4 text-sm text-muted"><span>${esc(advertError)}</span><button data-action="retry-adverts" class="text-gold min-h-11 px-3">Retry announcements</button></div>` : '';
+    return `<section aria-label="Homepage announcements" class="mb-7"><div class="flex items-center justify-between gap-4 mb-4"><h2 class="font-display text-lg font-bold">Latest announcements</h2>${advertisements.length > 3 ? `<button data-action="all-adverts" class="min-h-11 text-xs font-semibold text-gold">View all (${advertisements.length}) ${icon('arrow-right','ml-1')}</button>` : ''}</div><div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">${advertisements.slice(0,3).map(a => advertCard(a)).join('')}</div></section>`;
+  }
+  function homepageAdverts() { return `<div data-adverts-home>${advertHomeContent()}</div>`; }
+  function publishedAdverts() {
+    return `${advertError ? `<p role="alert" class="text-sm text-amber-200 mb-4">${esc(advertError)} <button data-action="retry-adverts" class="text-gold min-h-11 hover:underline">Retry</button></p>` : ''}${advertisements.length ? `<div class="grid gap-5 md:grid-cols-2">${advertisements.map(a => advertCard(a,true)).join('')}</div>` : `<div class="${card}">${empty('No adverts published yet. Send your first announcement above.')}</div>`}`;
+  }
+  function refreshAdvertViews() {
+    document.querySelectorAll('[data-adverts-home]').forEach(container => { container.innerHTML = advertHomeContent(); });
+    if ($('published-adverts')) $('published-adverts').innerHTML = publishedAdverts();
+    if ($('advert-count')) $('advert-count').textContent = String(advertisements.length);
+  }
+  document.addEventListener('error',e => { if (e.target instanceof HTMLImageElement && e.target.hasAttribute('data-advert-image')) e.target.classList.add('hidden'); },true);
+  async function loadAdverts() {
+    if (!sb) return;
+    if (advertJob) return advertJob;
+    advertJob = (async () => {
+      try {
+        const result = [];
+        for (let from=0; ; from+=500) {
+          const {data,error} = await sb.from('advertisements').select(advertColumns).order('created_at',{ascending:false}).order('id').range(from,from+499);
+          if (error) throw error; if (!Array.isArray(data)) throw new Error('Invalid announcement response.');
+          result.push(...data); if (data.length < 500) break;
+        }
+        const changed = JSON.stringify(result) !== JSON.stringify(advertisements) || !!advertError;
+        advertisements = result; advertError = ''; if (changed) refreshAdvertViews();
+      } catch (error) { console.error('Announcement load:',error.message); advertError = 'Announcements could not be loaded. Please retry.'; refreshAdvertViews(); }
+    })();
+    try { await advertJob; } finally { advertJob = null; }
+  }
+  function sendAdvertPage() {
+    return heading('Send Advert','Publish a title, message, and optional image or link to every visitor and user.') + `<section class="${card} p-6 sm:p-8 max-w-3xl"><div class="flex gap-3 items-start mb-6"><span class="grid w-11 h-11 shrink-0 place-items-center rounded-xl bg-gold/10 text-gold">${icon('bullhorn')}</span><p class="text-sm leading-relaxed text-muted">Your advert appears on the homepage, including before sign-in. Announcements stay still so everyone can read them.</p></div><form id="advert-form" data-draft="advert" class="space-y-5"><p id="advert-form-error" role="alert" class="hidden rounded-xl border border-red-400/30 bg-red-400/5 p-4 text-sm text-red-200"></p><label class="block text-sm">Title<input required name="title" maxlength="120" class="${input} mt-2" placeholder="Your announcement title"></label><label class="block text-sm">Message<textarea required name="message" maxlength="2000" rows="5" class="${input} mt-2" placeholder="Write the message you want everyone to see…"></textarea></label><div class="grid sm:grid-cols-2 gap-5"><label class="block text-sm">Image URL <span class="text-muted">(optional)</span><input name="image_url" type="url" maxlength="2048" class="${input} mt-2" placeholder="https://example.com/image.webp"><span class="block text-xs leading-relaxed text-muted mt-2">Paste a publicly accessible HTTPS image link.</span></label><label class="block text-sm">Website link <span class="text-muted">(optional)</span><input name="link_url" type="url" maxlength="2048" class="${input} mt-2" placeholder="https://example.com"><span class="block text-xs leading-relaxed text-muted mt-2">Adds a Learn more link to your advert.</span></label></div><button type="submit" class="${primary} w-full sm:w-auto">${icon('paper-plane','mr-2')}Send</button><p class="text-xs leading-relaxed text-muted">Only authorized administrators can publish or remove adverts. Do not include private account details in public announcements.</p></form></section><section class="mt-9"><h2 class="font-display text-xl font-bold mb-5">Published adverts <span id="advert-count" class="text-sm text-muted ml-2">${advertisements.length}</span></h2><div id="published-adverts">${publishedAdverts()}</div></section>`;
+  }
+
+  function formError() { return authError ? `<div role="alert" class="rounded-xl border border-red-400/30 bg-red-400/5 p-4 mb-5 text-sm text-red-200 whitespace-pre-wrap">${esc(messageText(authError))}</div>` : ''; }
+  function passwordField(label='Password',name='password',create=false) {
+    return `<label class="block text-sm">${label}<input required type="password" name="${name}" ${create ? 'minlength="8"' : ''} maxlength="1024" autocomplete="${create ? 'new-password' : 'current-password'}" class="${input} mt-2" placeholder="${create ? 'At least 8 characters' : 'Enter your password'}"></label>`;
+  }
+  function authContent() {
+    if (authStep === 'verify' || authStep === 'password') {
+      const signup = pending?.kind === 'signup', verified = authStep === 'password';
+      return `<h2 class="font-display font-bold text-2xl">${verified ? 'Create your password' : 'Check your email'}</h2><p class="text-muted text-sm mt-3 mb-6 leading-relaxed">${verified ? 'Your email is verified. Save your password to finish.' : `Enter the verification code sent to <span class="text-slate-100 break-all">${esc(pending?.target || '')}</span>, then ${signup ? 'create' : 'reset'} your password.`}</p>${formError()}<form id="verify-form" class="space-y-4">${!verified ? `<label class="block text-sm">Email verification code<input required name="code" type="text" inputmode="numeric" pattern="[0-9]{4,10}" maxlength="10" autocomplete="one-time-code" class="${input} mt-2 tracking-widest" placeholder="Code from your email"></label>` : ''}${passwordField(signup ? 'Create your password' : 'New password','password',true)}<button type="submit" class="${primary} w-full">${verified ? 'Save password & continue' : signup ? 'Verify email & create account' : 'Verify code & reset password'} ${icon('arrow-right','ml-2')}</button></form>${!verified ? '<button data-action="resend" class="text-sm text-gold mt-5 min-h-11 hover:underline">Resend email code</button><p class="text-xs text-muted mt-3 leading-relaxed">Check your spam folder. Use the latest code. If your email contains only a link, contact Admin to enable code emails.</p>' : ''}<button data-action="auth-back" class="block text-sm text-muted mt-5 min-h-11 hover:text-white">Back to sign in</button>`;
+    }
+    if (authMode === 'recovery') {
+      return `<h2 class="font-display font-bold text-2xl">Reset your password</h2><p class="text-muted text-sm mt-3 mb-6 leading-relaxed">Enter the email address verified when you created your account.</p>${formError()}<form id="recovery-form" class="space-y-4"><label class="block text-sm">Verified email address<input required type="email" name="identity" maxlength="254" autocomplete="email" class="${input} mt-2" placeholder="you@example.com"></label><button type="submit" class="${primary} w-full" ${!connected ? 'disabled' : ''}>Send email recovery code ${icon('arrow-right','ml-2')}</button></form><button data-action="auth-back" class="block text-sm text-muted mt-5 min-h-11 hover:text-white">Back to sign in</button>`;
+    }
+    const signup = authMode === 'signup';
+    return `<div class="flex gap-5 border-b border-line mb-7"><button data-action="auth-mode" data-value="login" class="pb-4 text-sm ${!signup ? 'text-gold border-b-2 border-gold' : 'text-muted'}">Sign in</button><button data-action="auth-mode" data-value="signup" class="pb-4 text-sm ${signup ? 'text-gold border-b-2 border-gold' : 'text-muted'}">Create account</button></div><h2 class="font-display font-bold text-2xl">${signup ? 'Create your account' : 'Welcome back'}</h2><p class="text-muted text-sm mt-2 mb-6 leading-relaxed">${signup ? 'Enter your details to receive an email verification code. Create your password in the next step.' : 'Sign in with your existing password. Administrator accounts open only the Admin Dashboard.'}</p>${formError()}<form id="auth-form" class="space-y-4">${signup ? `<label class="block text-sm">Email address<input required type="email" name="email" maxlength="254" autocomplete="email" class="${input} mt-2" placeholder="you@example.com"></label><label class="block text-sm">Full name<input required name="name" maxlength="120" autocomplete="name" class="${input} mt-2" placeholder="Your full name"></label><label class="block text-sm">Country<select name="country" class="${input} mt-2">${countries()}</select></label><label class="block text-sm">Phone number <span class="text-muted">(optional)</span><input type="tel" name="phone" maxlength="30" autocomplete="tel" class="${input} mt-2" placeholder="+256 700 000 000"></label><p class="text-xs text-muted leading-relaxed">Use your own email address and a unique international phone number, if provided. Verification uses email codes only.</p>` : `<label class="block text-sm">Email or international phone<input required name="identity" maxlength="254" autocomplete="username" class="${input} mt-2" placeholder="you@example.com or +256…"></label>${passwordField()}<button type="button" data-action="forgot" class="text-xs text-gold hover:underline">Forgot password?</button>`}<button type="submit" class="${primary} w-full" ${!connected || (signup && settings?.external?.email === false) ? 'disabled' : ''}>${signup ? 'Get verification code' : 'Sign in'} ${icon('arrow-right','ml-2')}</button></form><div class="border-t border-line mt-6 pt-5 flex items-start gap-3 text-xs text-muted leading-relaxed">${icon('shield-halved','text-gold mt-0.5')}<p>Your account is protected. Verify your email once at signup. New accounts start at zero until deposits are approved.${settings?.external?.email === false ? '<br><span class="text-amber-200">Email verification is unavailable. Please contact Admin.</span>' : ''}</p></div>`;
+  }
+  function auth() {
+    $('app').innerHTML = `<div class="max-w-7xl mx-auto px-5 md:px-10"><header class="py-7 flex flex-wrap justify-between items-center gap-4">${brand()}<div class="flex items-center gap-5"><span class="hidden md:block text-sm text-muted">Built for a global community ${icon('globe','ml-2 text-gold')}</span>${downloadButton()}</div></header>${homepageAdverts()}<main id="main" class="grid lg:grid-cols-[1.15fr_1fr] items-center gap-12 lg:gap-24 py-8 lg:py-14"><section><div class="inline-flex items-center gap-2 rounded-full border border-gold/25 bg-gold/5 px-3 py-1.5 text-xs text-gold"><span class="w-1.5 h-1.5 rounded-full bg-gold"></span>YOUR CRYPTO. ONE CLEAR VIEW.</div><h1 class="font-display text-4xl sm:text-5xl xl:text-6xl font-extrabold tracking-tight leading-[1.15] mt-7">Watch Your<br>Investments <span class="text-gold">Grow.</span></h1><p class="max-w-md text-muted leading-relaxed mt-6">See your profits, track your returns, and enjoy seamless investment liquidation. Stay informed about your earnings and take control of every investment opportunity with confidence.</p><div class="grid grid-cols-2 gap-4 max-w-md mt-8"><div class="${card} p-5"><span class="text-gold">${icon('wallet')}</span><p class="font-display font-bold mt-4">Two networks.</p><p class="text-xs text-muted mt-2">USDT · BEP20 / TRC20</p></div><div class="${card} p-5"><span class="text-gold">${icon('database')}</span><p class="font-display font-bold mt-4">Real records.</p><p class="text-xs text-muted mt-2">Your authenticated account</p></div></div></section><section class="${card} p-6 sm:p-9">${authContent()}</section></main><footer class="border-t border-line py-6 text-xs text-muted flex flex-wrap justify-between gap-3"><span>© ${new Date().getFullYear()} Crypto Returns</span><span>USDT · BEP20 · TRC20</span></footer></div>`;
+    enhancePasswordFields();
+  }
+  function renderLoading() {
+    $('app').innerHTML = `<div class="max-w-7xl mx-auto px-5 py-7"><header class="flex flex-wrap justify-between items-center gap-4">${brand()}${downloadButton()}</header><main id="main" class="max-w-xl mx-auto py-20 text-center"><div class="text-gold">${icon('circle-notch','text-2xl motion-safe:animate-spin')}</div><h1 class="font-display text-xl font-bold mt-5">Loading your account</h1><p class="text-sm text-muted mt-3">Retrieving your records securely.</p><button data-action="logout" class="${secondary} mt-7">LOG OUT</button></main></div>`;
+  }
+  function renderError() {
+    $('app').innerHTML = `<div class="max-w-3xl mx-auto px-5 py-8"><header class="flex flex-wrap items-center justify-between gap-4">${brand()}${downloadButton()}</header><main id="main" class="${card} p-7 sm:p-10 mt-12"><div class="w-12 h-12 rounded-xl bg-red-400/10 text-red-300 grid place-items-center text-xl">${icon('plug-circle-exclamation')}</div><h1 class="font-display text-2xl font-bold mt-5">Unable to load account services</h1><p class="text-sm text-muted mt-3 leading-relaxed">No substitute balances or demonstration records are displayed. Check the error and retry.</p><div role="alert" class="rounded-xl border border-red-400/25 bg-ink p-4 mt-5 text-sm text-red-200 break-words whitespace-pre-wrap">${esc(messageText(screenError))}</div><div class="flex flex-wrap gap-3 mt-6"><button data-action="retry" class="${primary}">Retry connection</button>${authUser ? `<button data-action="logout" class="${secondary}">LOG OUT</button>` : ''}</div></main></div>`;
+  }
+  const userNav = [['home','house','Home','See money'],['invest','arrow-trend-up','Invest','Put money'],['withdraw','wallet','Withdraw','Take money'],['referral','user-group','Referral','Invite'],['account','circle-user','Account','Help']];
+  const adminNav = [['home','chart-pie','Overview','Platform activity'],['users','users','Users','Manage accounts'],['deposits','arrow-down','Deposits','Review requests'],['withdrawals','arrow-up','Withdrawals','Pending only'],['referral','user-group','Referrals','Track invitations'],['account','headset','Customer care','Messages'],['history','clock-rotate-left','History','Processed requests'],['adverts','bullhorn','Send Advert','Homepage announcements'],['settings','sliders','Settings','Deposit wallets']];
+  function hasUnread(u) { return state.messages.some(m => u.role === 'admin' ? m.unread_admin : m.user_id === u.id && m.unread_user); }
+  function render() {
+    needsRender = false;
+    if (screenError) return renderError();
+    if (loading && authUser && !state) return renderLoading();
+    const u = me(); if (!u) return auth();
+    const admin = access.role === 'admin', nav = admin ? adminNav : userNav;
+    $('app').innerHTML = `<div class="lg:flex min-h-screen"><aside class="hidden lg:flex w-64 shrink-0 border-r border-line flex-col px-5 py-7 bg-[#0c111d]">${brand()}<div class="mt-10 mb-3 px-3 text-[10px] tracking-[.18em] text-muted">${admin ? 'ADMIN WORKSPACE' : 'YOUR WORKSPACE'}</div><nav aria-label="Workspace navigation" class="space-y-2">${nav.map(([id,i,title,sub]) => `<button data-action="nav" data-value="${id}" ${page === id ? 'aria-current="page"' : ''} class="w-full flex gap-3 items-center rounded-xl p-3 text-left ${page === id ? 'bg-gold/10 text-gold' : 'text-muted hover:bg-white/5 hover:text-white'}">${icon(i,'w-5')}<span><span class="block text-sm font-semibold">${title}</span><span class="block text-[11px] mt-0.5">${sub}</span></span>${id === 'account' && hasUnread(u) ? '<span class="ml-auto h-2 w-2 rounded-full bg-gold"></span>' : ''}</button>`).join('')}</nav><div class="mt-auto pt-10"><div class="rounded-xl border border-line p-4"><div class="text-gold text-sm mb-2">${icon('circle-info','mr-2')}Need a hand?</div><p class="text-muted text-xs leading-relaxed">Your private support conversation is one click away.</p><button data-action="nav" data-value="account" class="text-xs mt-3 min-h-11 font-bold hover:text-gold">${admin ? 'Open customer care' : 'Contact support'} ${icon('arrow-right','ml-2')}</button></div><button data-action="logout" class="mt-5 flex items-center gap-3 text-sm text-muted hover:text-white p-3 min-h-11">${icon('right-from-bracket')}${admin ? 'LOG OUT' : 'Sign out'}</button></div></aside><div class="min-w-0 flex-1"><header class="border-b border-line px-5 md:px-8 lg:px-10 py-5 flex flex-wrap items-center justify-between gap-4"><div class="lg:hidden">${brand()}</div><div class="hidden lg:flex gap-2 items-center text-xs text-muted">Workspace ${icon('chevron-right','text-[9px] mx-2')}<span class="text-slate-200">${nav.find(n => n[0] === page)?.[2] || 'Overview'}</span></div><div class="flex flex-wrap items-center gap-2 sm:gap-3">${downloadButton()}${admin ? `<button data-action="logout" class="inline-flex min-h-11 items-center gap-2 rounded-xl border border-line px-4 py-3 text-xs font-bold text-slate-100 hover:border-gold hover:bg-white/5">${icon('right-from-bracket')}LOG OUT</button>` : ''}<span class="hidden xl:inline text-xs text-muted">${icon('globe','mr-2')}${esc(countryName(u.country))} · USD</span><button data-action="refresh" aria-label="Refresh records" class="h-11 w-11 rounded-xl border border-line hover:bg-white/5">${icon('rotate')}</button><button data-action="nav" data-value="account" aria-label="Open messages" class="relative h-11 w-11 rounded-xl border border-line hover:bg-white/5">${icon('bell')}${hasUnread(u) ? '<span class="absolute right-2 top-2 h-1.5 w-1.5 bg-gold rounded-full"></span>' : ''}</button></div></header>${admin ? `<nav aria-label="Admin navigation" class="lg:hidden flex gap-2 overflow-x-auto px-5 pt-4 pb-1">${nav.map(n => `<button class="shrink-0 min-h-11 px-3 py-2 rounded-lg text-sm ${page === n[0] ? 'bg-gold text-ink' : 'border border-line'}" data-action="nav" data-value="${n[0]}">${n[2]}</button>`).join('')}</nav>` : ''}<main id="main" class="max-w-[1440px] mx-auto px-5 md:px-8 lg:px-10 pt-8 pb-28 lg:pb-8">${content(u)}</main><footer class="hidden lg:flex border-t border-line px-10 py-5 text-[11px] text-muted justify-between"><span>© ${new Date().getFullYear()} Crypto Returns</span><span>USDT · BEP20 · TRC20</span></footer></div></div>${!admin ? `<nav aria-label="Main navigation" class="lg:hidden fixed bottom-0 inset-x-0 z-30 bg-[#0c111d] border-t border-line flex justify-around px-1 pt-3 pb-[max(1.25rem,env(safe-area-inset-bottom))]">${userNav.map(n => `<button data-action="nav" data-value="${n[0]}" ${page === n[0] ? 'aria-current="page"' : ''} class="w-1/5 min-h-11 flex flex-col items-center gap-1.5 text-[10px] ${page === n[0] ? 'text-gold' : 'text-muted'}">${icon(n[1],'text-base')}<span>${n[2]}</span></button>`).join('')}</nav>` : ''}`;
+    enhancePasswordFields(); restoreDrafts(); updateWithdrawalPreview();
+  }
+  function chart() {
+    const records = [...state.ledger].sort((a,b) => new Date(a.accrual_at)-new Date(b.accrual_at));
+    if (!records.length) return empty('No earnings have been posted yet. Your accrual history will appear here.');
+    let total = 0;
+    const points = records.map(r => ({amount:(total+=Number(r.amount)),at:r.accrual_at})).slice(-14);
+    const low = points[0].amount, high = points[points.length-1].amount;
+    const coords = points.map((p,i) => ({x:points.length === 1 ? 280 : i*560/(points.length-1),y:high === low ? 70 : 110-(p.amount-low)/(high-low)*85}));
+    const path = coords.map((p,i) => `${i ? 'L' : 'M'}${p.x.toFixed(2)} ${p.y.toFixed(2)}`).join(' ');
+    return `<div class="flex justify-between text-xs text-muted mt-5"><span>Cumulative posted earnings</span><span class="text-gold">${money(high)}</span></div><svg viewBox="0 0 560 145" class="w-full h-44 mt-4" role="img" aria-label="Cumulative earnings from actual accrual records"><path d="M0 25H560M0 65H560M0 105H560" stroke="#242c3c" stroke-dasharray="4 5"/><path d="${path}" stroke="#f5be4f" stroke-width="2.5" fill="none"/>${coords.map(p => `<circle cx="${p.x.toFixed(2)}" cy="${p.y.toFixed(2)}" r="3" fill="#f5be4f"/>`).join('')}</svg><div class="flex justify-between text-[10px] text-muted"><span>${date(points[0].at)}</span><span>${date(points[points.length-1].at)}</span></div>`;
   }
   function activity(u) {
-    const rows = [...state.deposits.filter(d => d.user_id === u.id).map(d => ({...d, label:'Deposit'})), ...state.withdrawals.filter(w => w.user_id === u.id).map(w => ({...w, label:w.type === 'daily' ? 'Daily withdrawal' : 'Capital withdrawal'}))].sort((a,b) => new Date(b.created_at) - new Date(a.created_at)).slice(0,6);
-    return rows.length ? rows.map(r => `<div class="flex items-center justify-between gap-3 px-6 py-4 border-b border-line last:border-0"><div class="flex gap-3 items-center"><span class="w-9 h-9 bg-white/5 rounded-lg grid place-items-center text-gold">${icon(r.label === 'Deposit' ? 'arrow-down' : 'arrow-up')}</span><div><p class="text-sm">${r.label}</p><p class="text-xs text-muted mt-1">${r.network} · ${date(r.created_at)}</p></div></div><div class="text-right"><p class="text-sm mb-1">${money(r.amount)}</p>${badge(r.status)}</div></div>`).join('') : empty('No transactions yet. Your real requests will appear here.');
+    const rows = [...state.deposits.filter(d => d.user_id === u.id).map(d => ({...d,label:'Deposit'})),...state.withdrawals.filter(w => w.user_id === u.id).map(w => ({...w,label:w.type === 'daily' ? 'Daily withdrawal' : 'Capital withdrawal'}))].sort((a,b) => new Date(b.created_at)-new Date(a.created_at)).slice(0,6);
+    return rows.map(r => `<div class="flex items-center justify-between gap-3 px-6 py-4 border-b border-line last:border-0"><div class="flex gap-3 items-center"><span class="w-9 h-9 bg-white/5 rounded-lg grid place-items-center text-gold">${icon(r.label === 'Deposit' ? 'arrow-down' : 'arrow-up')}</span><div><p class="text-sm">${r.label}</p><p class="text-xs text-muted mt-1">${r.network} · ${date(r.created_at)}</p></div></div><div class="text-right"><p class="text-sm mb-1">${money(r.amount)}</p>${badge(r.status)}</div></div>`).join('') || empty('No transactions yet. Your requests will appear here.');
+  }
+  function home(u) {
+    const today = new Date().toISOString().slice(0,10), posted = state.ledger.filter(r => r.accrual_at.slice(0,10) === today).reduce((s,r) => s+Number(r.amount),0);
+    const next = u.capital > 0 && u.lastAccrual ? new Date(new Date(u.lastAccrual).getTime()+day).toISOString() : null;
+    return homepageAdverts()+heading(`Welcome back, ${esc(u.name.split(' ')[0])}<span class="text-gold">.</span>`,'Your balances and account activity, in one place.',`<button data-action="nav" data-value="invest" class="${primary}">${icon('plus','mr-2')}New investment</button>`)+`<div class="grid md:grid-cols-2 xl:grid-cols-3 gap-5">${[['My investment',money(u.capital),'layer-group','Approved capital · separate balance','text-slate-100'],['My daily earnings',money(u.earnings),'arrow-trend-up',`Posted today (UTC) ${money(posted)}`,'text-emerald-400'],['Next calculation · estimate',money(u.capital > 0 ? (u.capital+u.earnings)*.025 : 0),'clock',`${days(u)} days active · 2.5% configured rate`,'text-slate-100']].map(([title,value,i,sub,color]) => `<section class="${card} p-6"><div class="flex justify-between items-center"><span class="text-sm text-muted">${title}</span><span class="w-10 h-10 rounded-xl grid place-items-center bg-gold/10 text-gold">${icon(i)}</span></div><p class="font-display text-4xl font-bold tracking-tight mt-5 ${color}">${value}</p><p class="mt-5 text-xs text-muted">${sub}</p></section>`).join('')}</div><div class="grid xl:grid-cols-[1.65fr_1fr] gap-5 mt-6"><section class="${card} p-6"><h2 class="font-display font-semibold">Your earnings history</h2><p class="text-xs text-muted mt-1.5">Actual postings · up to 14 most recent accruals</p>${chart()}<p class="text-xs text-muted mt-5 leading-relaxed">${next ? `Next full 24-hour period ends ${esc(when(next))}. Estimates are not part of your balance until posted by the server.` : 'Daily accrual starts after deposit approval. No active capital means no daily compounding.'}</p></section><section class="${card} p-6"><span class="text-[10px] text-gold tracking-[.18em]">GROW YOUR COMMUNITY</span><h2 class="font-display font-bold text-2xl mt-4">Good things are<br>better shared.</h2><p class="text-sm leading-relaxed text-muted mt-4">Invite a friend. You receive <span class="text-white">$5</span> and they receive <span class="text-white">$2.50</span> after their first approved deposit.</p><div class="rounded-xl border border-line p-4 my-6 text-xs text-muted leading-relaxed">Rewards are credited to earnings once. Submitting a deposit is not the same as approval.</div><button data-action="nav" data-value="referral" class="${secondary} w-full text-gold">Invite a friend ${icon('arrow-right','ml-2')}</button></section></div><section class="${card} mt-6"><div class="flex justify-between p-6 border-b border-line"><h2 class="font-display font-semibold">Recent activity</h2><button data-action="nav" data-value="withdraw" class="text-xs text-gold">View requests ${icon('arrow-right','ml-1')}</button></div>${activity(u)}</section><div class="flex items-start gap-3 rounded-xl bg-white/[.02] px-4 py-4 mt-5 text-xs text-muted leading-relaxed">${icon('circle-info','mt-0.5 text-gold')}<p>Balances reflect recorded activity, not independently verified wallet reserves. Crypto investment is high risk; the configured rate is not a guarantee of returns or payment.</p></div>`;
   }
   function warning() {
-    return `<div class="border border-red-400/25 bg-red-400/5 rounded-xl p-4 mb-6"><p class="text-red-300 text-sm font-semibold">${icon('triangle-exclamation','mr-2')}Wrong network = Money LOST forever. No refund.</p><p class="mt-2 text-xs text-muted leading-relaxed">Choose BSC only if your wallet also says BSC / BEP20. Address starts with 0x…<br>Choose TRX only if your wallet also says TRX / TRC20. Address starts with T…<br>Only send USDT. Confirm the asset, network, and address before transferring.</p></div>`;
+    return `<div class="border border-red-400/25 bg-red-400/5 rounded-xl p-4 mb-6"><p class="text-red-300 text-sm font-semibold">${icon('triangle-exclamation','mr-2')}Wrong network = Money LOST forever. No refund.</p><p class="mt-2 text-xs text-muted leading-relaxed">Choose BSC only if your wallet also says BSC / BEP20. Address starts with 0x…<br>Choose TRX only if your wallet also says TRX / TRC20. Address starts with T…<br>Only use USDT. Confirm the asset, network, and address before transferring.</p></div>`;
   }
   function networkButtons() {
-    return `<div class="grid sm:grid-cols-2 gap-3">${[['BSC','BNB Smart Chain','BEP20 · address starts with 0x'],['TRX','Tron','TRC20 · address starts with T']].map(([n,t,s]) => `<button type="button" data-action="network" data-value="${n}" aria-pressed="${network === n}" class="text-left rounded-xl border p-4 ${network === n ? 'border-gold bg-gold/5' : 'border-line hover:border-slate-500'}"><div class="flex items-center justify-between"><span class="text-sm font-semibold">${n} <span class="text-muted font-normal ml-1">${t}</span></span>${icon(network === n ? 'circle-check' : 'circle', network === n ? 'text-gold' : 'text-muted')}</div><p class="text-xs text-muted mt-2">${s}</p></button>`).join('')}</div>`;
+    return `<div class="grid sm:grid-cols-2 gap-3">${[['BSC','BNB Smart Chain','BEP20 · address starts with 0x'],['TRX','Tron','TRC20 · address starts with T']].map(([n,t,s]) => `<button type="button" data-action="network" data-value="${n}" aria-pressed="${network === n}" class="text-left rounded-xl border p-4 ${network === n ? 'border-gold bg-gold/5' : 'border-line hover:border-slate-500'}"><div class="flex items-center justify-between gap-2"><span class="text-sm font-semibold">${n} <span class="text-muted font-normal ml-1">${t}</span></span>${icon(network === n ? 'circle-check' : 'circle',network === n ? 'text-gold' : 'text-muted')}</div><p class="text-xs text-muted mt-2">${s}</p></button>`).join('')}</div>`;
+  }
+  function requestList(records,label) {
+    return records.map(r => `<div class="py-4 border-b border-line last:border-0 flex justify-between gap-3"><div class="text-sm">${money(r.amount)}${r.type ? ` · ${r.type}` : ''}<p class="text-xs text-muted mt-1">${r.network} · ${date(r.created_at)}${r.net_amount != null ? ` · Net ${money(r.net_amount)}` : ''}</p></div>${badge(r.status)}</div>`).join('') || empty(`No ${label} requests yet.`);
   }
   function invest(u) {
     const address = state.wallets[network], requests = state.deposits.filter(d => d.user_id === u.id);
-    return heading('Make an investment','Choose your category, select the correct network, and submit your transaction proof.') + warning() + `<div class="grid xl:grid-cols-[1.65fr_1fr] gap-6"><section class="${card} p-6 sm:p-8"><h2 class="font-display font-semibold mb-4"><span class="text-gold mr-3">01</span>Choose your category</h2><div class="grid grid-cols-3 sm:grid-cols-6 gap-3 mb-8">${[50,100,200,500,800,1000].map(a => `<button data-action="amount" data-value="${a}" aria-pressed="${depositAmount === a}" class="rounded-xl border px-2 py-4 text-sm font-bold ${depositAmount === a ? 'border-gold bg-gold/10 text-gold' : 'border-line hover:border-slate-500'}">$${a.toLocaleString()}</button>`).join('')}</div><h2 class="font-display font-semibold mb-4"><span class="text-gold mr-3">02</span>Choose your crypto network</h2>${networkButtons()}<div class="h-px bg-line my-8"></div><h2 class="font-display font-semibold mb-4"><span class="text-gold mr-3">03</span>Address & transaction proof</h2>${!address ? '<p role="alert" class="text-sm text-red-200">No deposit address is configured for this network. Contact Admin; do not transfer funds.</p>' : ack ? `<label class="text-sm block" for="deposit-address">${network} USDT deposit address</label><div class="flex gap-2 mt-2"><input id="deposit-address" readonly class="${input} font-mono text-xs" value="${esc(address)}"><button data-action="copy-wallet" class="${secondary}" aria-label="Copy deposit address">${icon('copy')}</button></div><p class="text-xs text-gold mt-3">Select ${network} / ${network === 'BSC' ? 'BEP20' : 'TRC20'} in your sending wallet. Only send USDT.</p><form id="deposit-form" data-draft="deposit" class="mt-5"><label class="block text-sm">Transaction hash / proof<input required minlength="8" maxlength="500" name="proof" class="${input} mt-2" placeholder="Paste your actual transaction hash"></label><button class="${primary} w-full mt-5">Submit deposit for review ${icon('arrow-right','ml-2')}</button></form>` : `<p class="text-muted text-sm mb-4">Confirm the network safety notice before viewing the address.</p><button data-action="ack" class="${primary}">Review network safety ${icon('arrow-right','ml-2')}</button>`}</section><aside class="space-y-5"><section class="${card} p-6"><h2 class="font-display font-semibold mb-5">Investment summary</h2><div class="space-y-4 text-sm"><p class="flex justify-between text-muted">Category <span class="text-white">${money(depositAmount)}</span></p><p class="flex justify-between text-muted">Network <span class="text-white">${network} / ${network === 'BSC' ? 'BEP20' : 'TRC20'}</span></p><p class="flex justify-between text-muted">Starting calculation · estimate <span class="text-gold">${money(depositAmount * .025)}</span></p><p class="flex justify-between text-muted">Status after submission ${badge('pending')}</p></div><p class="text-xs text-muted leading-relaxed border-t border-line mt-5 pt-5">No balance is credited on submission. An administrator must verify your payment and approve the deposit. Actual calculations are performed only by the server.</p></section><section class="${card} p-6"><h2 class="font-display font-semibold">Your deposit requests</h2>${requests.map(d => `<div class="flex justify-between items-center border-b border-line last:border-0 py-4 text-sm"><div>${money(d.amount)}<p class="text-xs text-muted mt-1">${d.network} · ${date(d.created_at)}</p></div>${badge(d.status)}</div>`).join('') || empty('No deposit requests yet.')}</section></aside></div>`;
+    return heading('Make an investment','Choose your category, select the correct network, and submit transaction proof.')+warning()+`<div class="grid xl:grid-cols-[1.65fr_1fr] gap-6"><section class="${card} p-6 sm:p-8"><h2 class="font-display font-semibold mb-4"><span class="text-gold mr-3">01</span>Choose your category</h2><div class="grid grid-cols-3 sm:grid-cols-6 gap-3 mb-8">${[50,100,200,500,800,1000].map(a => `<button data-action="amount" data-value="${a}" aria-pressed="${depositAmount === a}" class="rounded-xl border px-2 py-4 text-sm font-bold ${depositAmount === a ? 'border-gold bg-gold/10 text-gold' : 'border-line hover:border-slate-500'}">$${a.toLocaleString()}</button>`).join('')}</div><h2 class="font-display font-semibold mb-4"><span class="text-gold mr-3">02</span>Choose your crypto network</h2>${networkButtons()}<div class="h-px bg-line my-8"></div><h2 class="font-display font-semibold mb-4"><span class="text-gold mr-3">03</span>Address & transaction proof</h2>${!address ? '<p role="alert" class="text-sm text-red-200">No deposit address is configured for this network. Contact Admin; do not transfer funds.</p>' : ack ? `<label for="deposit-address" class="text-sm block">${network} USDT deposit address</label><div class="flex gap-2 mt-2"><input id="deposit-address" readonly class="${input} font-mono text-xs" value="${esc(address)}"><button data-action="copy-wallet" class="${secondary}" aria-label="Copy deposit address">${icon('copy')}</button></div><p class="text-xs text-gold mt-3">Select ${network} / ${network === 'BSC' ? 'BEP20' : 'TRC20'} in your sending wallet. Only send USDT.</p><form id="deposit-form" data-draft="deposit" class="mt-5"><label class="block text-sm">Transaction hash / proof<input required minlength="8" maxlength="500" name="proof" class="${input} mt-2" placeholder="Paste your transaction hash"></label><button type="submit" class="${primary} w-full mt-5">Submit deposit for review ${icon('arrow-right','ml-2')}</button></form>` : `<p class="text-muted text-sm mb-4">Confirm the network safety notice before viewing the address.</p><button data-action="ack" class="${primary}">Review network safety ${icon('arrow-right','ml-2')}</button>`}</section><aside class="space-y-5"><section class="${card} p-6"><h2 class="font-display font-semibold mb-5">Investment summary</h2><div class="space-y-4 text-sm"><p class="flex justify-between text-muted">Category <span class="text-white">${money(depositAmount)}</span></p><p class="flex justify-between text-muted">Network <span class="text-white">${network} / ${network === 'BSC' ? 'BEP20' : 'TRC20'}</span></p><p class="flex justify-between text-muted gap-3">Starting calculation · estimate <span class="text-gold">${money(depositAmount*.025)}</span></p><p class="flex justify-between text-muted">After submission ${badge('pending')}</p></div><p class="text-xs text-muted leading-relaxed border-t border-line mt-5 pt-5">No balance is credited on submission. An administrator must verify and approve your payment.</p></section><section class="${card} p-6"><h2 class="font-display font-semibold">Your deposit requests</h2>${requestList(requests,'deposit')}</section></aside></div>`;
   }
   function withdraw(u) {
     const capital = withdrawType === 'capital', rate = capital ? capitalRate(u) : .15;
-    const requests = state.withdrawals.filter(w => w.user_id === u.id), reserved = requests.filter(w => w.type === 'daily' && w.status === 'pending').reduce((sum,w) => sum + Number(w.amount),0), available = capital ? u.capital : Math.max(0,u.earnings - reserved);
-    const pendingCapital = requests.some(w => w.type === 'capital' && w.status === 'pending');
-    return heading(capital ? 'Apply for capital withdrawal' : 'Withdraw daily earnings','Review your network, fees, and available balance before submitting.') + warning() + `<div class="grid xl:grid-cols-[1.65fr_1fr] gap-6"><section class="${card} p-6 sm:p-8"><div class="flex flex-wrap gap-3 mb-7"><button data-action="withdraw-type" data-value="daily" class="${!capital ? primary : secondary}">Daily earnings</button><button data-action="withdraw-type" data-value="capital" class="${capital ? primary : secondary}">Capital application</button></div><h2 class="font-display font-semibold mb-4">Choose your crypto network</h2>${networkButtons()}${!ack ? `<button data-action="ack" class="${primary} mt-6">Review network safety ${icon('arrow-right','ml-2')}</button>` : `<form id="withdraw-form" data-draft="withdraw-${withdrawType}-${network}" class="space-y-5 mt-6"><label class="block text-sm">Paste your ${network} address<input required name="address" class="${input} mt-2 font-mono" placeholder="${network === 'BSC' ? '0x…' : 'T…'}" pattern="${network === 'BSC' ? '0x[a-fA-F0-9]{40}' : 'T[1-9A-HJ-NP-Za-km-z]{33}'}"></label><label class="block text-sm">Amount (USD)<input id="withdraw-amount" name="amount" type="number" step="0.01" min="${capital ? '.01' : '10'}" max="${available}" value="${capital ? u.capital : ''}" ${capital ? 'readonly' : ''} required class="${input} mt-2" placeholder="Minimum $10"></label><div class="bg-ink rounded-xl p-4 space-y-3 text-sm"><p class="flex justify-between text-muted">Withdrawal charge (${rate * 100}%)<span id="fee"></span></p><p class="flex justify-between font-semibold">You receive<span id="net" class="text-gold"></span></p></div><p class="text-xs text-muted leading-relaxed">${capital ? 'Approval removes your entire capital and immediately stops daily compounding. Existing earnings remain separate.' : 'The full requested amount, including the fee, is deducted from earnings only after approval.'} No funds are deducted if rejected.</p><button class="${primary} w-full" ${capital ? available <= 0 || pendingCapital ? 'disabled' : '' : available < 10 ? 'disabled' : ''}>Submit withdrawal request ${icon('arrow-right','ml-2')}</button></form>`}</section><aside class="space-y-5"><section class="${card} p-6"><p class="text-sm text-muted">Unrequested ${capital ? 'capital' : 'daily earnings'}</p><p class="font-display font-bold text-3xl mt-3">${money(available)}</p><div class="border-t border-line mt-5 pt-5 space-y-3 text-xs text-muted"><p>${capital ? `Days active: ${days(u)} · approved ${date(u.approved)}` : `Total earnings balance ${money(u.earnings)} · Pending requests ${money(reserved)}`}</p><p>${capital ? 'Within 45 days: 50% charge. After 45 days: 35% charge. The server checks the exact approval timestamp.' : 'Minimum withdrawal: $10. Charge: 15%.'}</p>${pendingCapital && capital ? '<p class="text-amber-200">You already have a pending capital application.</p>' : ''}<p>All requests require admin review and a separate on-chain payment.</p></div></section><section class="${card} p-6"><h2 class="font-display font-semibold">Withdrawal requests</h2>${requests.map(w => `<div class="py-4 border-b border-line last:border-0 flex justify-between gap-3"><div class="text-sm">${money(w.amount)} · ${w.type}<p class="text-xs text-muted mt-1">Net ${money(w.net_amount)} · ${w.network}</p><p class="text-xs text-muted mt-1">${date(w.created_at)}</p></div>${badge(w.status)}</div>`).join('') || empty('No withdrawal requests yet.')}</section></aside></div>`;
+    const requests = state.withdrawals.filter(w => w.user_id === u.id), reserved = requests.filter(w => w.type === 'daily' && w.status === 'pending').reduce((s,w) => s+Number(w.amount),0);
+    const available = capital ? u.capital : Math.max(0,u.earnings-reserved), pendingCapital = requests.some(w => w.type === 'capital' && w.status === 'pending');
+    return heading(capital ? 'Apply for capital withdrawal' : 'Withdraw daily earnings','Review your network, fees, and available balance before submitting.')+warning()+`<div class="grid xl:grid-cols-[1.65fr_1fr] gap-6"><section class="${card} p-6 sm:p-8"><div class="flex flex-wrap gap-3 mb-7"><button data-action="withdraw-type" data-value="daily" class="${!capital ? primary : secondary}">Daily earnings</button><button data-action="withdraw-type" data-value="capital" class="${capital ? primary : secondary}">Capital application</button></div><h2 class="font-display font-semibold mb-4">Choose your crypto network</h2>${networkButtons()}${!ack ? `<button data-action="ack" class="${primary} mt-6">Review network safety</button>` : `<form id="withdraw-form" data-draft="withdraw-${withdrawType}-${network}" class="space-y-5 mt-6"><label class="block text-sm">Paste your ${network} address<input required name="address" class="${input} mt-2 font-mono" placeholder="${network === 'BSC' ? '0x…' : 'T…'}" pattern="${network === 'BSC' ? '0x[a-fA-F0-9]{40}' : 'T[1-9A-HJ-NP-Za-km-z]{33}'}"></label><label class="block text-sm">Amount (USD)<input id="withdraw-amount" name="amount" type="number" step="0.01" min="${capital ? '.01' : '10'}" max="${available}" value="${capital ? u.capital : ''}" ${capital ? 'readonly' : ''} required class="${input} mt-2" placeholder="Minimum $10"></label><div class="bg-ink rounded-xl p-4 space-y-3 text-sm"><p class="flex justify-between text-muted">Withdrawal charge (${rate*100}%)<span id="fee"></span></p><p class="flex justify-between font-semibold">You receive<span id="net" class="text-gold"></span></p></div><p class="text-xs text-muted leading-relaxed">${capital ? 'Approval removes your entire capital and immediately stops daily compounding. Existing earnings remain separate.' : 'The full requested amount, including the fee, is deducted from earnings only after approval.'} No funds are deducted if rejected.</p><button type="submit" class="${primary} w-full" ${capital ? available <= 0 || pendingCapital ? 'disabled' : '' : available < 10 ? 'disabled' : ''}>Submit withdrawal request</button></form>`}</section><aside class="space-y-5"><section class="${card} p-6"><p class="text-sm text-muted">Unrequested ${capital ? 'capital' : 'daily earnings'}</p><p class="font-display font-bold text-3xl mt-3">${money(available)}</p><div class="border-t border-line mt-5 pt-5 space-y-3 text-xs text-muted"><p>${capital ? `Days active: ${days(u)} · approved ${date(u.approved)}` : `Total earnings ${money(u.earnings)} · Pending requests ${money(reserved)}`}</p><p>${capital ? 'Within 45 days: 50% charge. After 45 days: 35% charge. The server checks the exact approval timestamp.' : 'Minimum withdrawal: $10. Charge: 15%.'}</p>${pendingCapital && capital ? '<p class="text-amber-200">You already have a pending capital application.</p>' : ''}<p>All requests require admin review and a separate on-chain payment.</p></div></section><section class="${card} p-6"><h2 class="font-display font-semibold">Withdrawal requests</h2>${requestList(requests,'withdrawal')}</section></aside></div>`;
   }
   function updateWithdrawalPreview() {
     const field = $('withdraw-amount'), u = me(); if (!field || !u) return;
-    const amount = Math.max(0,Number(field.value) || 0), rate = withdrawType === 'daily' ? .15 : capitalRate(u), fee = Math.round((amount * rate + Number.EPSILON) * 100) / 100;
-    $('fee').textContent = money(fee); $('net').textContent = money(amount - fee);
+    const amount = Math.max(0,Number(field.value)||0), rate = withdrawType === 'daily' ? .15 : capitalRate(u), fee = Math.round((amount*rate+Number.EPSILON)*100)/100;
+    $('fee').textContent = money(fee); $('net').textContent = money(amount-fee);
   }
   function referral(u) {
     const link = `${location.origin}${location.pathname}?ref=${encodeURIComponent(u.id)}`, friends = state.friends;
-    return heading('Share the opportunity','Track actual invitations and rewards after first deposit approval.') + (state.referralError ? `<div role="alert" class="${card} p-5 text-sm text-red-200 mb-5">${esc(state.referralError)}<button data-action="load-referrals" class="${secondary} ml-3">Retry</button></div>` : '') + (friends ? `<div class="grid md:grid-cols-3 gap-5">${[['Invited friends',friends.length],['Rewarded referrals',friends.filter(f => f.referral_rewarded).length],['Credited referral rewards',money(friends.filter(f => f.referral_rewarded).length * 5)]].map(([label,value]) => `<section class="${card} p-6"><p class="text-sm text-muted">${label}</p><p class="text-3xl font-display font-bold mt-3">${value}</p></section>`).join('')}</div>` : `<div class="${card} p-6 text-sm text-muted">${state.referralError ? 'Referral totals are unavailable.' : 'Loading your real referral records…'}</div>`) + `<section class="${card} p-6 sm:p-8 mt-6"><span class="text-gold text-xs tracking-widest">INVITE. CONNECT. EARN.</span><h2 class="font-display font-bold text-2xl mt-3">You get $5. They get $2.50.</h2><p class="text-muted text-sm mt-3">Rewards are credited once to daily earnings after the invited user's first approved deposit.</p><label for="referral-link" class="block text-sm mt-6">Your unique referral link</label><div class="flex gap-3 mt-2"><input id="referral-link" readonly class="${input} text-xs" value="${esc(link)}"><button data-action="copy-referral" class="${primary}">${icon('copy','mr-2')}Copy</button></div></section><section class="${card} p-6 mt-6"><h2 class="font-semibold mb-4">Your invitations</h2>${friends ? friends.map(f => `<div class="flex justify-between gap-3 py-4 border-b border-line last:border-0"><div><p class="text-sm">${esc(f.full_name)}</p><p class="text-xs text-muted mt-1">Joined ${date(f.joined_at)}</p></div>${badge(f.referral_rewarded ? 'approved' : 'pending')}</div>`).join('') || empty('No invitations yet. Copy your link to get started.') : '<p class="text-sm text-muted">Invitation records are not loaded yet.</p>'}</section>`;
+    return heading('Share the opportunity','Track invitations and rewards after first deposit approval.')+`${state.referralError ? `<div role="alert" class="${card} p-5 text-sm text-red-200 mb-5">${esc(messageText(state.referralError))}<button data-action="load-referrals" class="${secondary} ml-3">Retry</button></div>` : ''}${friends ? `<div class="grid md:grid-cols-3 gap-5">${[['Invited friends',friends.length],['Rewarded referrals',friends.filter(f => f.referral_rewarded).length],['Credited referral rewards',money(friends.filter(f => f.referral_rewarded).length*5)]].map(([label,value]) => `<section class="${card} p-6"><p class="text-sm text-muted">${label}</p><p class="text-3xl font-display font-bold mt-3">${value}</p></section>`).join('')}</div>` : `<div class="${card} p-6 text-sm text-muted">${state.referralError ? 'Referral totals are unavailable.' : 'Loading your referrals…'}</div>`}<section class="${card} p-6 sm:p-8 mt-6"><span class="text-gold text-xs tracking-widest">INVITE. CONNECT. EARN.</span><h2 class="font-display font-bold text-2xl mt-3">You get $5. They get $2.50.</h2><p class="text-muted text-sm mt-3 leading-relaxed">Rewards are credited once to daily earnings after the invited user's first approved deposit.</p><label for="referral-link" class="block text-sm mt-6">Your unique referral link</label><div class="flex gap-3 mt-2"><input id="referral-link" readonly class="${input} text-xs" value="${esc(link)}"><button data-action="copy-referral" class="${primary}">${icon('copy','mr-2')}Copy</button></div></section><section class="${card} p-6 mt-6"><h2 class="font-semibold mb-4">Your invitations</h2>${friends ? friends.map(f => `<div class="flex justify-between gap-3 py-4 border-b border-line last:border-0"><div><p class="text-sm">${esc(f.full_name)}</p><p class="text-xs text-muted mt-1">Joined ${date(f.joined_at)}</p></div>${badge(f.referral_rewarded ? 'approved' : 'pending')}</div>`).join('') || empty('No invitations yet. Copy your link to get started.') : '<p class="text-sm text-muted">Invitation records are not loaded yet.</p>'}</section>`;
   }
-  const findUser = id => state.users.find(u => u.id === id);
-  function banButton(u) { return u.role === 'admin' ? '' : `<button data-action="ban" data-id="${u.id}" class="rounded-lg border ${u.banned ? 'border-emerald-400/30 text-emerald-300' : 'border-red-400/30 text-red-300'} px-3 py-2 text-xs hover:bg-white/5 whitespace-nowrap">${u.banned ? 'Unban User' : 'Ban User'}</button>`; }
+  function banButton(u) { return u.role === 'admin' ? '' : `<button data-action="ban" data-id="${u.id}" class="rounded-lg border min-h-11 ${u.banned ? 'border-emerald-400/30 text-emerald-300' : 'border-red-400/30 text-red-300'} px-3 py-2 text-xs hover:bg-white/5 whitespace-nowrap">${u.banned ? 'Unban User' : 'Ban User'}</button>`; }
   function inviterText(u) { const inviter = findUser(u.referrer); return inviter ? `${esc(inviter.name)} · ${esc(inviter.phone)}` : 'No Invitor / Direct'; }
   function userCard(u) {
     return `<article class="${card} p-5"><div class="flex justify-between items-start gap-3"><div><h3 class="font-semibold">${esc(u.name)} ${u.banned ? badge('BANNED') : ''}</h3><p class="text-xs text-muted mt-1">${esc(u.phone || 'No phone on file')} · ${esc(countryName(u.country))}</p></div>${banButton(u)}</div><dl class="grid grid-cols-2 gap-4 text-xs mt-5"><div><dt class="text-muted">Capital</dt><dd class="text-lg mt-1">${money(u.capital)}</dd></div><div><dt class="text-muted">Daily earnings</dt><dd class="text-lg mt-1 text-emerald-300">${money(u.earnings)}</dd></div><div><dt class="text-muted">Days active</dt><dd class="mt-1">${days(u)}</dd></div><div><dt class="text-muted">Joined</dt><dd class="mt-1">${date(u.joined)}</dd></div></dl><p class="text-xs text-muted border-t border-line pt-4 mt-4">Invitor: ${inviterText(u)}</p></article>`;
   }
-  function messageCard(m, admin) {
+  function messageCard(m,admin) {
     const u = findUser(m.user_id);
-    return `<article class="${card} p-5 mb-4"><div class="flex justify-between gap-3 mb-3"><div><h3 class="text-sm font-semibold">${esc(u.name)} ${u.banned ? badge('BANNED') : ''}</h3><p class="text-xs text-muted mt-1">${esc(u.phone)} · ${when(m.created_at)}</p>${admin ? `<p class="text-xs text-muted mt-2">Investment ${money(u.capital)} · ${days(u)} days active</p>` : ''}</div>${admin ? banButton(u) : ''}</div><p class="text-sm leading-relaxed whitespace-pre-wrap break-words">${esc(m.body)}</p>${m.reply ? `<div class="bg-gold/5 border-l-2 border-gold p-4 mt-4"><p class="text-xs text-gold mb-2">Admin reply · ${when(m.replied_at)}</p><p class="text-sm whitespace-pre-wrap break-words">${esc(m.reply)}</p></div>` : !admin ? '<p class="text-xs text-muted mt-4">Waiting for admin reply</p>' : ''}${admin ? `<form data-reply="${m.id}" data-draft="reply-${m.id}" class="flex gap-2 mt-4"><input required name="reply" maxlength="2000" aria-label="Reply to ${esc(u.name)}" class="${input}" placeholder="${m.reply ? 'Update reply…' : 'Reply to this user…'}"><button class="${primary}">Reply</button></form>` : ''}</article>`;
+    return `<article class="${card} p-5 mb-4"><div class="flex justify-between gap-3 mb-3"><div><h3 class="text-sm font-semibold">${esc(u.name)} ${u.banned ? badge('BANNED') : ''}</h3><p class="text-xs text-muted mt-1">${esc(u.phone)} · ${esc(when(m.created_at))}</p>${admin ? `<p class="text-xs text-muted mt-2">Investment ${money(u.capital)} · ${days(u)} days active</p>` : ''}</div>${admin ? banButton(u) : ''}</div><p class="text-sm leading-relaxed whitespace-pre-wrap break-words">${esc(m.body)}</p>${m.reply ? `<div class="bg-gold/5 border-l-2 border-gold p-4 mt-4"><p class="text-xs text-gold mb-2">Admin reply · ${esc(when(m.replied_at))}</p><p class="text-sm whitespace-pre-wrap break-words">${esc(m.reply)}</p></div>` : !admin ? '<p class="text-xs text-muted mt-4">Waiting for admin reply</p>' : ''}${admin ? `<form data-reply="${m.id}" data-draft="reply-${m.id}" class="flex gap-2 mt-4"><input required name="reply" maxlength="2000" aria-label="Reply to ${esc(u.name)}" class="${input}" placeholder="${m.reply ? 'Update reply…' : 'Reply to this user…'}"><button type="submit" class="${primary}">Reply</button></form>` : ''}</article>`;
   }
-  function searchBox(placeholder) { return `<label class="flex items-center gap-3 ${card} px-4 mb-6">${icon('magnifying-glass','text-muted')}<input id="search" type="search" value="${esc(search)}" aria-label="${esc(placeholder)}" placeholder="${esc(placeholder)}" class="bg-transparent py-3.5 text-sm outline-none w-full"></label>`; }
   function account(u) {
     if (u.role === 'admin') {
       const rows = state.messages.filter(m => { const f = findUser(m.user_id); return matches(`${f.name} ${f.phone} ${m.body}`); });
-      return heading('Customer care','Private conversations, visible only to their owner and administrators.') + searchBox('Search names, phones, or messages') + (rows.map(m => messageCard(m,true)).join('') || empty('No matching messages.'));
+      return heading('Customer care','Private conversations, visible only to their owner and administrators.')+searchBox('Search names, phones, or messages')+(rows.map(m => messageCard(m,true)).join('')||empty('No matching messages.'));
     }
-    return heading('Account & support','Manage your profile and connect with customer care.',`<button data-action="logout" class="${secondary}">${icon('right-from-bracket','mr-2')}Sign out</button>`) + `<div class="grid xl:grid-cols-[1fr_1.5fr] gap-6"><section class="${card} p-6 h-fit"><h2 class="font-semibold mb-5">Your account</h2><form id="profile-form" data-draft="profile" class="space-y-4"><label class="block text-sm">Full name<input name="name" required maxlength="120" value="${esc(u.name)}" class="${input} mt-2"></label><label class="block text-sm">Country<select name="country" class="${input} mt-2">${countries(u.country)}</select></label><p class="text-xs text-muted leading-relaxed">${esc(u.phone)}<br>${esc(authUser.email || 'No email on file')}<br>Joined ${date(u.joined)}</p><button class="${primary}">Save profile</button></form><button data-action="capital" class="${secondary} w-full mt-6 text-gold">Apply for Withdrawal ${icon('arrow-right','ml-2')}</button></section><section><div class="${card} p-6 mb-5"><h2 class="font-semibold">Message Admin</h2><p class="text-muted text-sm mt-2">Replies go only to your account.</p><form id="message-form" data-draft="message" class="mt-4"><label class="sr-only" for="message-text">Your message</label><textarea id="message-text" name="text" required maxlength="2000" rows="4" class="${input}" placeholder="How can we help?"></textarea><button class="${primary} mt-3">Submit message ${icon('paper-plane','ml-2')}</button></form></div>${state.messages.filter(m => m.user_id === u.id).map(m => messageCard(m,false)).join('')}</section></div>`;
+    return heading('Account & support','Manage your profile and connect with customer care.',`<button data-action="logout" class="${secondary}">${icon('right-from-bracket','mr-2')}Sign out</button>`)+`<div class="grid xl:grid-cols-[1fr_1.5fr] gap-6"><section class="${card} p-6 h-fit"><h2 class="font-semibold mb-5">Your account</h2><form id="profile-form" data-draft="profile" class="space-y-4"><label class="block text-sm">Full name<input name="name" required maxlength="120" value="${esc(u.name)}" class="${input} mt-2"></label><label class="block text-sm">Country<select name="country" class="${input} mt-2">${countries(u.country)}</select></label><p class="text-xs text-muted leading-relaxed break-words">${esc(u.phone)}<br>${esc(authUser.email || 'No email on file')}<br>Joined ${date(u.joined)}</p><button type="submit" class="${primary}">Save profile</button></form><button data-action="capital" class="${secondary} w-full mt-6 text-gold">Apply for Withdrawal ${icon('arrow-right','ml-2')}</button></section><section><div class="${card} p-6 mb-5"><h2 class="font-semibold">Message Admin</h2><p class="text-muted text-sm mt-2">Replies go only to your account.</p><form id="message-form" data-draft="message" class="mt-4"><label class="sr-only" for="message-text">Your message</label><textarea id="message-text" name="text" required maxlength="2000" rows="4" class="${input}" placeholder="How can we help?"></textarea><button type="submit" class="${primary} mt-3">Submit message ${icon('paper-plane','ml-2')}</button></form></div>${state.messages.filter(m => m.user_id === u.id).map(m => messageCard(m,false)).join('')}</section></div>`;
   }
   function depositCard(d) {
     const u = findUser(d.user_id);
-    return `<article class="${card} p-5 mb-4"><div class="flex justify-between items-start gap-3"><div><h3 class="font-semibold">${esc(u.name)} ${u.banned ? badge('BANNED') : ''}</h3><p class="text-xs text-muted mt-1">${esc(u.phone)} · ${when(d.created_at)}</p></div>${banButton(u)}</div><div class="flex gap-5 mt-5 items-center"><p class="text-2xl font-bold">${money(d.amount)}</p><span class="text-sm text-gold">${d.network}</span>${badge(d.status)}</div><p class="font-mono break-all text-xs bg-ink p-3 rounded-lg mt-4">Proof: ${esc(d.transaction_hash)}</p><p class="font-mono break-all text-xs text-muted mt-3">Submitted deposit address: ${esc(d.wallet_address)}</p><div class="flex gap-3 mt-4"><button data-action="approve-deposit" data-id="${d.id}" class="${primary}" ${u.banned ? 'disabled' : ''}>Approve</button><button data-action="reject-deposit" data-id="${d.id}" class="${secondary}">Reject</button></div><p class="text-xs text-muted mt-3">Verify the USDT transfer on the correct blockchain before approval.</p></article>`;
+    return `<article class="${card} p-5 mb-4"><div class="flex justify-between items-start gap-3"><div><h3 class="font-semibold">${esc(u.name)} ${u.banned ? badge('BANNED') : ''}</h3><p class="text-xs text-muted mt-1">${esc(u.phone)} · ${esc(when(d.created_at))}</p></div>${banButton(u)}</div><div class="flex gap-5 mt-5 items-center"><p class="text-2xl font-bold">${money(d.amount)}</p><span class="text-sm text-gold">${d.network}</span>${badge(d.status)}</div><p class="font-mono break-all text-xs bg-ink p-3 rounded-lg mt-4">Proof: ${esc(d.transaction_hash)}</p><p class="font-mono break-all text-xs text-muted mt-3">Submitted deposit address: ${esc(d.wallet_address)}</p><div class="flex gap-3 mt-4"><button data-action="approve-deposit" data-id="${d.id}" class="${primary}" ${u.banned ? 'disabled' : ''}>Approve</button><button data-action="reject-deposit" data-id="${d.id}" class="${secondary}">Reject</button></div><p class="text-xs text-muted mt-3">Verify the USDT transfer on the correct blockchain before approval.</p></article>`;
   }
   function withdrawalCard(w) {
     const u = findUser(w.user_id), past = state.withdrawals.filter(h => h.user_id === u.id && h.type === 'daily' && h.status === 'approved' && h.id !== w.id);
-    return `<article class="${card} p-6 mb-5"><div class="flex justify-between items-start gap-3"><div><p class="text-[10px] tracking-widest text-gold mb-2">A. USER DETAILS</p><h3 class="font-display font-bold text-lg">${esc(u.name)} ${u.banned ? badge('BANNED') : ''}</h3><p class="text-xs text-muted mt-2">Phone: ${esc(u.phone)} · Joined: ${date(u.joined)}</p><p class="text-xs text-muted mt-2">Invitor: ${inviterText(u)}</p></div>${banButton(u)}</div><div class="border-t border-line mt-5 pt-5"><p class="text-[10px] tracking-widest text-gold mb-3">B. INVESTMENT DETAILS</p><div class="grid sm:grid-cols-3 gap-4 text-sm"><div><p class="text-xs text-muted">Capital invested</p><p class="mt-1">${money(u.capital)}</p></div><div><p class="text-xs text-muted">Current daily earnings</p><p class="mt-1 text-emerald-300">${money(u.earnings)}</p></div><div><p class="text-xs text-muted">Days active since approval</p><p class="mt-1">${days(u)}</p></div></div></div><div class="border-t border-line mt-5 pt-5"><p class="text-[10px] tracking-widest text-gold mb-3">C. THIS WITHDRAWAL REQUEST</p><div class="grid sm:grid-cols-2 gap-3 text-sm"><p><span class="text-muted">Type:</span> ${w.type === 'daily' ? 'Daily Earnings' : 'Capital'}</p><p><span class="text-muted">Network:</span> ${w.network}</p><p><span class="text-muted">Requested:</span> ${money(w.amount)}</p><p><span class="text-muted">Charge (${Number(w.fee_rate) * 100}%):</span> ${money(w.fee)}</p><p class="text-gold font-bold">Net to pay: ${money(w.net_amount)}</p><p class="text-xs text-muted">${when(w.created_at)}</p></div><p class="text-xs text-muted mt-4">User wallet address</p><div class="flex gap-2 mt-2"><p class="font-mono break-all text-xs bg-ink p-3 rounded-lg flex-1">${esc(w.wallet_address)}</p><button class="${secondary}" data-action="copy-value" data-value="${esc(w.wallet_address)}" aria-label="Copy withdrawal address">${icon('copy')}</button></div></div><div class="border-t border-line mt-5 pt-5"><p class="text-[10px] tracking-widest text-gold mb-3">D. TOTAL DAILY WITHDRAWAL HISTORY</p><p class="text-xs text-muted">${past.length} previously approved · Total withdrawn ${money(past.reduce((s,p) => s + Number(p.amount),0))}</p>${past.length ? `<ul class="mt-3 space-y-2 text-xs">${past.sort((a,b) => new Date(b.processed_at) - new Date(a.processed_at)).map(p => `<li>${date(p.processed_at)} · ${money(p.amount)} requested · ${money(p.net_amount)} net approved</li>`).join('')}</ul>` : '<p class="text-xs text-muted mt-2">No previously approved daily withdrawals.</p>'}</div><div class="border-t border-line mt-5 pt-5"><p class="text-[10px] tracking-widest text-gold mb-3">E. ADMIN ACTIONS</p><div class="flex gap-3"><button data-action="approve-withdrawal" data-id="${w.id}" class="${primary}" ${u.banned ? 'disabled' : ''}>Approve</button><button data-action="reject-withdrawal" data-id="${w.id}" class="${secondary}">Reject</button></div><p class="text-xs text-muted mt-3">Approval atomically deducts the requested balance and archives this request. This button does not transfer cryptocurrency.</p></div></article>`;
+    return `<article class="${card} p-6 mb-5"><div class="flex justify-between items-start gap-3"><div><p class="text-[10px] tracking-widest text-gold mb-2">A. USER DETAILS</p><h3 class="font-display font-bold text-lg">${esc(u.name)} ${u.banned ? badge('BANNED') : ''}</h3><p class="text-xs text-muted mt-2">Phone: ${esc(u.phone)} · Joined: ${date(u.joined)}</p><p class="text-xs text-muted mt-2">Invitor: ${inviterText(u)}</p></div>${banButton(u)}</div><div class="border-t border-line mt-5 pt-5"><p class="text-[10px] tracking-widest text-gold mb-3">B. INVESTMENT DETAILS</p><div class="grid sm:grid-cols-3 gap-4 text-sm"><div><p class="text-xs text-muted">Capital invested</p><p class="mt-1">${money(u.capital)}</p></div><div><p class="text-xs text-muted">Daily earnings</p><p class="mt-1 text-emerald-300">${money(u.earnings)}</p></div><div><p class="text-xs text-muted">Days active since approval</p><p class="mt-1">${days(u)}</p></div></div></div><div class="border-t border-line mt-5 pt-5"><p class="text-[10px] tracking-widest text-gold mb-3">C. THIS WITHDRAWAL REQUEST</p><div class="grid sm:grid-cols-2 gap-3 text-sm"><p><span class="text-muted">Type:</span> ${w.type === 'daily' ? 'Daily Earnings' : 'Capital'}</p><p><span class="text-muted">Network:</span> ${w.network}</p><p><span class="text-muted">Requested:</span> ${money(w.amount)}</p><p><span class="text-muted">Charge (${Number(w.fee_rate)*100}%):</span> ${money(w.fee)}</p><p class="text-gold font-bold">Net to pay: ${money(w.net_amount)}</p><p class="text-xs text-muted">${esc(when(w.created_at))}</p></div><p class="text-xs text-muted mt-4">User wallet address</p><div class="flex gap-2 mt-2"><p class="font-mono break-all text-xs bg-ink p-3 rounded-lg flex-1">${esc(w.wallet_address)}</p><button class="${secondary}" data-action="copy-value" data-value="${esc(w.wallet_address)}" aria-label="Copy withdrawal address">${icon('copy')}</button></div></div><div class="border-t border-line mt-5 pt-5"><p class="text-[10px] tracking-widest text-gold mb-3">D. TOTAL DAILY WITHDRAWAL HISTORY</p><p class="text-xs text-muted">${past.length} previously approved · Total withdrawn ${money(past.reduce((s,p) => s+Number(p.amount),0))}</p>${past.length ? `<ul class="mt-3 space-y-2 text-xs">${past.sort((a,b) => new Date(b.processed_at)-new Date(a.processed_at)).map(p => `<li>${date(p.processed_at)} · ${money(p.amount)} requested · ${money(p.net_amount)} net approved</li>`).join('')}</ul>` : '<p class="text-xs text-muted mt-2">No previously approved daily withdrawals.</p>'}</div><div class="border-t border-line mt-5 pt-5"><p class="text-[10px] tracking-widest text-gold mb-3">E. ADMIN ACTIONS</p><div class="flex gap-3"><button data-action="approve-withdrawal" data-id="${w.id}" class="${primary}" ${u.banned ? 'disabled' : ''}>Approve</button><button data-action="reject-withdrawal" data-id="${w.id}" class="${secondary}">Reject</button></div><p class="text-xs text-muted mt-3">Approval deducts the requested balance and archives this request. This button does not transfer cryptocurrency.</p></div></article>`;
   }
   function adminHome() {
     const users = state.users.filter(u => u.role !== 'admin'), deposits = state.deposits.filter(d => d.status === 'pending'), withdrawals = state.withdrawals.filter(w => w.status === 'pending');
-    return heading('Platform overview','Live totals and pending requests from your Supabase database.',`<span class="text-xs border border-line rounded-lg px-3 py-2 text-muted">${icon('calendar','mr-2')}${date(Date.now())}</span>`) + `<div class="grid sm:grid-cols-2 xl:grid-cols-3 gap-5">${[['Total users',users.length,'users'],['Total capital',money(users.reduce((s,u) => s + u.capital,0)),'layer-group'],['Total daily earnings',money(users.reduce((s,u) => s + u.earnings,0)),'chart-line'],['Pending deposits',deposits.length,'arrow-down'],['Pending withdrawals',withdrawals.length,'arrow-up'],['Unanswered messages',state.messages.filter(m => !m.reply).length,'comment']].map(([label,value,i]) => `<section class="${card} p-6"><div class="flex justify-between text-muted text-sm">${label}${icon(i,'text-gold')}</div><p class="font-display text-3xl font-bold mt-4">${value}</p></section>`).join('')}</div><div class="grid xl:grid-cols-2 gap-6 mt-7"><section><h2 class="font-display font-semibold mb-4">Pending deposits <span class="text-muted text-xs ml-2">${deposits.length}</span></h2>${deposits.map(depositCard).join('') || `<div class="${card}">${empty('No pending deposits.')}</div>`}</section><section><h2 class="font-display font-semibold mb-4">Pending withdrawals <span class="text-muted text-xs ml-2">${withdrawals.length}</span></h2>${withdrawals.map(withdrawalCard).join('') || `<div class="${card}">${empty('No pending withdrawals.')}</div>`}</section></div>`;
+    return heading('Platform overview','Current platform totals and pending investment requests.',`<button data-action="nav" data-value="adverts" class="${primary}">${icon('bullhorn','mr-2')}Send Advert</button>`)+`<div class="grid sm:grid-cols-2 xl:grid-cols-3 gap-5">${[['Total users',users.length,'users'],['Total capital',money(users.reduce((s,u) => s+u.capital,0)),'layer-group'],['Total daily earnings',money(users.reduce((s,u) => s+u.earnings,0)),'chart-line'],['Pending deposits',deposits.length,'arrow-down'],['Pending withdrawals',withdrawals.length,'arrow-up'],['Unanswered messages',state.messages.filter(m => !m.reply).length,'comment']].map(([label,value,i]) => `<section class="${card} p-6"><div class="flex justify-between text-muted text-sm">${label}${icon(i,'text-gold')}</div><p class="font-display text-3xl font-bold mt-4">${value}</p></section>`).join('')}</div><div class="grid xl:grid-cols-2 gap-6 mt-7"><section><h2 class="font-display font-semibold mb-4">Pending deposits <span class="text-muted text-xs ml-2">${deposits.length}</span></h2>${deposits.map(depositCard).join('') || `<div class="${card}">${empty('No pending deposits.')}</div>`}</section><section><h2 class="font-display font-semibold mb-4">Pending withdrawals <span class="text-muted text-xs ml-2">${withdrawals.length}</span></h2>${withdrawals.map(withdrawalCard).join('') || `<div class="${card}">${empty('No pending withdrawals.')}</div>`}</section></div>`;
+  }
+  function settingsPage() {
+    return heading('Deposit wallet settings','Manage the deposit addresses used for investment requests.')+`<section class="${card} p-6 sm:p-8 max-w-3xl"><p class="text-sm text-gold mb-5">Double-check the chain and ownership before changing a deposit address.</p><form id="wallet-form" data-draft="wallets" class="space-y-5">${['BSC','TRX'].map(n => `<label class="block text-sm">${n} / ${n === 'BSC' ? 'BEP20' : 'TRC20'} USDT address<input required name="${n}" value="${esc(state.wallets[n] || '')}" pattern="${n === 'BSC' ? '0x[a-fA-F0-9]{40}' : 'T[1-9A-HJ-NP-Za-km-z]{33}'}" class="${input} mt-2 font-mono"></label>`).join('')}<button type="submit" class="${primary}">Save wallet addresses</button></form><div class="border-t border-line mt-6 pt-6 text-xs text-muted leading-relaxed">Roles, balances, approvals, and earnings are enforced server-side. Login never creates administrator accounts, changes credentials, or assigns roles.</div><div class="border-t border-line mt-6 pt-6"><h2 class="font-display font-semibold text-sm">Email verification</h2><p class="text-xs text-muted leading-relaxed mt-3">Account verification uses email codes only. Email delivery is configured separately from deposit wallets; contact the project owner if verification emails are unavailable.</p></div><div class="border-t border-line mt-6 pt-6"><h2 class="font-display font-semibold text-lg">Change administrator login</h2><p class="text-sm text-muted leading-relaxed mt-3">Update your existing administrator account only. Your role, phone number, balances, and history stay unchanged. Enter passwords here, not in chat.</p><form id="admin-login-form" class="space-y-4 mt-5"><p id="admin-login-error" role="alert" class="hidden rounded-xl border border-red-400/30 bg-red-400/5 p-4 text-sm text-red-200 whitespace-pre-wrap"></p>${passwordField('Current password','current_password')}<label class="block text-sm">New administrator email<input required type="email" name="email" maxlength="254" autocomplete="email" value="${esc(authUser.email || '')}" class="${input} mt-2" placeholder="Your new administrator email"></label>${passwordField('New password','new_password',true)}${passwordField('Confirm new password','confirm_password',true)}<p class="text-xs text-muted leading-relaxed">Your current password and administrator permissions are verified on the server. An email change requires confirmation in your current and new inboxes. Until confirmed, use your current email and new password.</p><button type="submit" class="${primary} w-full sm:w-auto">Update administrator login ${icon('shield-halved','ml-2')}</button></form></div></section>`;
   }
   function content(u) {
     if (u.role !== 'admin') return ({home,invest,withdraw,referral,account}[page] || home)(u);
     if (page === 'home') return adminHome();
     if (page === 'account') return account(u);
-    if (page === 'users') return heading('Users management','Actual balances, referrals, and account access controls.') + searchBox('Search name, phone, or country') + `<div class="grid xl:grid-cols-2 gap-5">${state.users.filter(f => f.role !== 'admin' && matches(`${f.name} ${f.phone} ${countryName(f.country)}`)).map(userCard).join('') || empty('No matching users.')}</div>`;
-    if (page === 'deposits') {
-      const rows = state.deposits.filter(d => { const f = findUser(d.user_id); return d.status === 'pending' && matches(`${f.name} ${f.phone} ${d.transaction_hash}`); });
-      return heading('Pending deposits','Verify payment proof before approving capital.') + searchBox('Search depositor name, phone, or proof') + (rows.map(depositCard).join('') || empty('No matching pending deposits.'));
+    if (page === 'adverts') return sendAdvertPage();
+    if (page === 'settings') return settingsPage();
+    if (page === 'users') return heading('Users management','Recorded balances, referrals, and account access controls.')+searchBox('Search name, phone, or country')+`<div class="grid xl:grid-cols-2 gap-5">${state.users.filter(f => f.role !== 'admin' && matches(`${f.name} ${f.phone} ${countryName(f.country)}`)).map(userCard).join('')||empty('No matching users.')}</div>`;
+    if (page === 'deposits' || page === 'withdrawals') {
+      const deposit = page === 'deposits', source = deposit ? state.deposits : state.withdrawals;
+      const rows = source.filter(r => { const f = findUser(r.user_id); return r.status === 'pending' && matches(`${f.name} ${f.phone} ${r.transaction_hash || r.wallet_address}`); });
+      return heading(deposit ? 'Pending deposits' : 'Pending withdrawals',deposit ? 'Verify payment proof before approving capital.' : 'Processed requests disappear after approval or rejection.')+searchBox('Search name, phone, transaction proof, or address')+(rows.map(deposit ? depositCard : withdrawalCard).join('')||empty('No matching pending requests.'));
     }
-    if (page === 'withdrawals') {
-      const rows = state.withdrawals.filter(w => { const f = findUser(w.user_id); return w.status === 'pending' && matches(`${f.name} ${f.phone} ${w.wallet_address}`); });
-      return heading('Pending withdrawals','Processed requests disappear after the server commits approval or rejection.') + searchBox('Search name, phone, or wallet address') + (rows.map(withdrawalCard).join('') || empty('No matching pending withdrawals.'));
-    }
-    if (page === 'referral') return heading('Referral tracking','Rewards are applied once, at first deposit approval.') + searchBox('Search invited users or phone numbers') + `<div class="grid xl:grid-cols-2 gap-5">${state.users.filter(f => f.referrer && matches(`${f.name} ${f.phone} ${findUser(f.referrer)?.name || ''}`)).map(userCard).join('') || empty('No matching referrals.')}</div>`;
+    if (page === 'referral') return heading('Referral tracking','Rewards are applied once, at first deposit approval.')+searchBox('Search invited users or phone numbers')+`<div class="grid xl:grid-cols-2 gap-5">${state.users.filter(f => f.referrer && matches(`${f.name} ${f.phone} ${findUser(f.referrer)?.name || ''}`)).map(userCard).join('')||empty('No matching referrals.')}</div>`;
     if (page === 'history') {
-      const rows = [...state.deposits.map(d => ({...d,kind:'Deposit'})),...state.withdrawals.map(w => ({...w,kind:`${w.type} withdrawal`}))].filter(r => r.status !== 'pending').sort((a,b) => new Date(b.processed_at) - new Date(a.processed_at)).filter(r => { const f = findUser(r.user_id); return matches(`${f.name} ${f.phone} ${r.kind} ${r.status}`); });
-      return heading('Request history','Archived records; no processed requests appear on the main pending lists.') + searchBox('Search user names, request types, or statuses') + `<section class="${card} p-5">${rows.map(r => `<div class="border-b border-line last:border-0 py-4 flex flex-wrap justify-between gap-4"><div><p class="text-sm">${esc(findUser(r.user_id).name)} · ${esc(r.kind)}</p><p class="text-xs text-muted mt-1">${when(r.processed_at)} · ${r.network} · ${money(r.amount)}${r.net_amount != null ? ` · Net ${money(r.net_amount)}` : ''}</p></div><div class="flex items-center gap-3">${badge(r.status)}${banButton(findUser(r.user_id))}</div></div>`).join('') || empty('No matching archived requests.')}</section>`;
+      const rows = [...state.deposits.map(d => ({...d,kind:'Deposit'})),...state.withdrawals.map(w => ({...w,kind:`${w.type} withdrawal`}))].filter(r => r.status !== 'pending').sort((a,b) => new Date(b.processed_at)-new Date(a.processed_at)).filter(r => { const f = findUser(r.user_id); return matches(`${f.name} ${f.phone} ${r.kind} ${r.status}`); });
+      return heading('Request history','Archived records; processed requests are removed from pending lists.')+searchBox('Search user names, request types, or statuses')+`<section class="${card} p-5">${rows.map(r => `<div class="border-b border-line last:border-0 py-4 flex flex-wrap justify-between gap-4"><div><p class="text-sm">${esc(findUser(r.user_id).name)} · ${esc(r.kind)}</p><p class="text-xs text-muted mt-1">${esc(when(r.processed_at))} · ${r.network} · ${money(r.amount)}${r.net_amount != null ? ` · Net ${money(r.net_amount)}` : ''}</p></div><div class="flex items-center gap-3">${badge(r.status)}${banButton(findUser(r.user_id))}</div></div>`).join('')||empty('No matching archived requests.')}</section>`;
     }
-    if (page === 'settings') return heading('Deposit wallet settings','These addresses are loaded from and saved to Supabase.') + `<section class="${card} p-6 max-w-3xl"><p class="text-sm text-gold mb-5">Double-check the chain and ownership before changing a deposit address.</p><form id="wallet-form" data-draft="wallets" class="space-y-5">${['BSC','TRX'].map(n => `<label class="block text-sm">${n} / ${n === 'BSC' ? 'BEP20' : 'TRC20'} USDT address<input required name="${n}" value="${esc(state.wallets[n] || '')}" pattern="${n === 'BSC' ? '0x[a-fA-F0-9]{40}' : 'T[1-9A-HJ-NP-Za-km-z]{33}'}" class="${input} mt-2 font-mono"></label>`).join('')}<button class="${primary}">Save wallet addresses</button></form><div class="border-t border-line mt-6 pt-6 text-xs text-muted leading-relaxed">Roles, balances, financial approvals, and earnings are enforced server-side. Administrator access is verified against the existing protected account role on the server. Login never creates administrator accounts, changes credentials, or assigns roles.</div><div class="border-t border-line mt-6 pt-6"><h2 class="font-display font-semibold text-sm">Email verification code delivery</h2><p class="text-xs text-muted leading-relaxed mt-3">In Supabase Dashboard → Authentication → Email Templates, include <code class="text-gold">${esc('{{ .Token }}')}</code> in the Magic Link, Confirm Signup, and Reset Password templates instead of a confirmation-link-only message. The website sends and validates real Supabase email codes; saving wallet settings does not change email templates.</p><p class="text-xs text-muted leading-relaxed mt-3">For international delivery, configure production SMTP in Supabase and enable the Email provider. Without custom SMTP, Supabase's built-in email service may restrict recipients and sending rates.</p><a href="https://supabase.com/docs/guides/auth/auth-email-passwordless" target="_blank" rel="noopener noreferrer" class="inline-block text-xs text-gold hover:underline mt-3">Email OTP setup guide ${icon('arrow-up-right-from-square','ml-1')}</a></div><div class="border-t border-line mt-6 pt-6"><h2 class="font-display font-semibold text-lg">Change administrator login</h2><p class="text-sm text-muted leading-relaxed mt-3">Update your existing administrator account only. Your role, phone number, balances, and history stay unchanged. Enter passwords here, not in chat.</p><form id="admin-login-form" class="space-y-4 mt-5"><p id="admin-login-error" role="alert" class="hidden rounded-xl border border-red-400/30 bg-red-400/5 p-4 text-sm text-red-200 whitespace-pre-wrap"></p><label class="block text-sm">Current password<input required type="password" name="current_password" maxlength="1024" autocomplete="current-password" class="${input} mt-2" placeholder="Confirm your current administrator password"></label><label class="block text-sm">New administrator email<input required type="email" name="email" maxlength="254" autocomplete="email" value="${esc(authUser.email || '')}" class="${input} mt-2" placeholder="Your new administrator email"></label><label class="block text-sm">New password<input required type="password" name="new_password" minlength="8" maxlength="1024" autocomplete="new-password" class="${input} mt-2" placeholder="At least 8 characters"></label><label class="block text-sm">Confirm new password<input required type="password" name="confirm_password" minlength="8" maxlength="1024" autocomplete="new-password" class="${input} mt-2" placeholder="Repeat your new password"></label><p class="text-xs text-muted leading-relaxed">Your current password and administrator permissions are verified on the server. The password changes immediately after a successful save. An email change requires Supabase confirmation; follow the instructions sent to your current and new inboxes. Until confirmed, sign in with your current email and new password.</p><button type="submit" class="${primary} w-full sm:w-auto">Update administrator login ${icon('shield-halved','ml-2')}</button></form></div></section>`;
     return adminHome();
   }
 
-  // All data reads are real Supabase queries. Paginate instead of silently truncating at 1,000 rows.
-  async function rows(table, owner, order = 'id') {
+  // Real backend reads only: never manufacture balances or calculate credits in the browser.
+  async function rows(table,owner,order='id') {
     const result = [];
-    for (let from = 0; ; from += 500) {
-      let q = sb.from(table).select('*').order(order).range(from,from + 499);
-      if (owner) q = q.eq('user_id',owner);
-      const {data,error} = await q;
-      if (error) throw new Error(`${table}: ${error.message}`);
-      if (!Array.isArray(data)) throw new Error(`${table}: Supabase returned an invalid response.`);
+    for (let from=0; ; from+=500) {
+      let request = sb.from(table).select('*').order(order).range(from,from+499);
+      if (owner) request = request.eq('user_id',owner);
+      const {data,error} = await request; if (error) throw new Error(`${table}: ${error.message}`);
+      if (!Array.isArray(data)) throw new Error(`${table}: Invalid response.`);
       result.push(...data); if (data.length < 500) break;
     }
     return result;
   }
-  async function rpc(name, params) {
+  async function rpc(name,params) {
     const {data,error} = await sb.rpc(name,params);
-    if (error) throw new Error(error.code === '23505' ? 'This transaction or application has already been submitted. Refresh and check your requests.' : error.message);
+    if (error) throw new Error(error.code === '23505' ? 'This transaction or application was already submitted. Refresh and check your requests.' : error.message);
     return data;
   }
-  async function edge(name, body = {}, token) {
-    const options = {body};
-    if (token) options.headers = {Authorization:`Bearer ${token}`};
+  async function edge(name,body={},token) {
+    const options = {body}; if (token) options.headers = {Authorization:`Bearer ${token}`};
     const {data,error} = await sb.functions.invoke(name,options);
     if (error) {
       let message = error.message, httpStatus, code;
       const HttpError = window.supabase.FunctionsHttpError;
       if ((typeof HttpError === 'function' && error instanceof HttpError) || error.context) {
         try {
-          const response = error.context, text = await response.text(); let detail = text;
-          httpStatus = response.status;
-          try { const parsed = JSON.parse(text); detail = parsed.error || parsed.message || text; code = parsed.code; } catch (_) { /* Preserve the actual HTTP error. */ }
-          message = name === 'account-access' ? detail || message : `[HTTP ${response.status}] ${detail || message}`;
-        } catch (_) { /* Preserve transport errors if the HTTP body cannot be read. */ }
+          const response = error.context, text = await response.text(); httpStatus = response.status;
+          try { const detail = JSON.parse(text); message = detail.error || detail.message || text || message; code = detail.code; }
+          catch (_) { message = text || message; }
+        } catch (_) { /* Keep the transport error if the response body cannot be read. */ }
       }
-      const failure = new Error(name === 'account-access' ? message : `${name}: ${message}`);
-      failure.status = httpStatus; failure.code = code; throw failure;
+      const failure = new Error(message); failure.status = httpStatus; failure.code = code; throw failure;
     }
-    if (!data || data.error) throw new Error(data?.error || `${name}: Empty response from Supabase.`);
+    if (!data || data.error) throw new Error(data?.error || 'Empty server response.');
     return data;
   }
   async function verifyAccess(token) {
     const checked = await edge('account-access',{action:'session'},token);
-    if (typeof checked.user_id !== 'string' || !['admin','user'].includes(checked.role)) throw new Error('The server did not return valid account permissions. No dashboard access was granted.');
+    if (typeof checked.user_id !== 'string' || !['admin','user'].includes(checked.role)) throw new Error('The server did not return valid account permissions. Dashboard access is blocked.');
     return checked;
   }
-  async function denyBanned() {
-    state = null; authUser = null; access = null; screenError = ''; authFlow = false; loading = false; epoch++; drafts.clear();
-    const {error} = await sb.auth.signOut({scope:'local'}); if (error) console.error('Supabase sign-out:',error.message);
-    authError = 'Your account has been banned. Contact Admin.'; authMode = 'login'; authStep = 'details';
-    status('Account access blocked. Contact Admin.'); render();
+  function clearAccount() {
+    epoch++; authUser = null; access = null; state = null; screenError = ''; loading = false; needsRender = false; drafts.clear();
+    page = 'home'; search = ''; ack = false;
   }
-  async function sync(quiet = false) {
+  async function logout() {
+    if (!sb) return;
+    authFlow = true; epoch++;
+    try { const {error} = await sb.auth.signOut({scope:'local'}); if (error) throw error; }
+    finally { authFlow = false; }
+    clearAccount(); pending = null; authError = ''; authMode = 'login'; authStep = 'details';
+    if ($('modal').open) $('modal').close(); render();
+  }
+  async function denyBanned() {
+    clearAccount(); pending = null; authFlow = true;
+    try { const {error} = await sb.auth.signOut({scope:'local'}); if (error) console.error('Sign-out:',error.message); }
+    finally { authFlow = false; }
+    authError = 'Your account has been banned. Contact Admin.'; authMode = 'login'; authStep = 'details'; render();
+  }
+  async function sync(quiet=false) {
     if (!authUser) return;
     const id = authUser.id, version = epoch;
     if (syncJob?.id === id && syncJob.version === version) return syncJob.promise;
     const task = (async () => {
       try {
-        // Revalidate the session and protected role on the server before workspace reads.
-        const checked = await verifyAccess();
-        if (version !== epoch || authUser?.id !== id) return;
+        const checked = await verifyAccess(); if (version !== epoch || authUser?.id !== id) return;
         if (checked.user_id !== id) throw new Error('Account session mismatch. Sign out and sign in again.');
         if (access && checked.role !== access.role) { page = 'home'; search = ''; drafts.clear(); state = null; }
         access = checked;
         const {data:profile,error:profileError} = await sb.from('profiles').select('*').eq('id',id).single();
-        if (profileError) throw new Error(`profiles: ${profileError.message}. Ensure the account profile was created by your SQL migration.`);
+        if (profileError) throw new Error(`Profile unavailable: ${profileError.message}`);
         if (version !== epoch || authUser?.id !== id) return;
         if (profile.banned) return await denyBanned();
-        if (profile.role !== checked.role) throw new Error('Your account permissions changed during verification. Retry; no alternate dashboard was opened.');
+        if (profile.role !== checked.role) throw new Error('Your permissions changed during verification. Retry; no alternate dashboard was opened.');
         const admin = checked.role === 'admin', owner = admin ? null : id;
         const [profiles,balances,deposits,withdrawals,messages,walletRows,ledger] = await Promise.all([
           admin ? rows('profiles',null) : Promise.resolve([profile]), rows('balances',owner,'user_id'), rows('deposits',owner), rows('withdrawals',owner), rows('messages',owner), rows('deposit_wallets',null,'network'), admin ? Promise.resolve([]) : rows('earnings_ledger',id)
@@ -338,22 +433,22 @@ document.addEventListener('DOMContentLoaded', () => {
         if (version !== epoch || authUser?.id !== id) return;
         const users = profiles.map(p => {
           const balance = balances.find(b => b.user_id === p.id);
-          if (!balance) throw new Error(`balances: No balance record exists for ${p.full_name}. Contact Admin; no substitute balance has been created.`);
-          if (!Number.isFinite(Number(balance.capital)) || !Number.isFinite(Number(balance.earnings))) throw new Error('balances: Invalid financial data returned by Supabase.');
+          if (!balance) throw new Error(`No balance record exists for ${p.full_name}. Contact Admin; no substitute was created.`);
+          if (!Number.isFinite(Number(balance.capital)) || !Number.isFinite(Number(balance.earnings))) throw new Error('Invalid financial data.');
           return {id:p.id,name:p.full_name,phone:p.phone,country:p.country,role:p.role,banned:p.banned,joined:p.joined_at,referrer:p.invited_by,referralPaid:p.referral_rewarded,capital:Number(balance.capital),earnings:Number(balance.earnings),approved:balance.approved_at,lastAccrual:balance.last_accrual_at};
         });
-        for (const record of [...deposits,...withdrawals,...messages]) if (!users.some(u => u.id === record.user_id)) throw new Error('A transaction refers to a missing or inaccessible user profile. Contact Admin.');
-        const next = {users,deposits:deposits.sort((a,b) => new Date(b.created_at) - new Date(a.created_at)),withdrawals:withdrawals.sort((a,b) => new Date(b.created_at) - new Date(a.created_at)),messages:messages.sort((a,b) => new Date(b.created_at) - new Date(a.created_at)),wallets:Object.fromEntries(walletRows.map(w => [w.network,w.address])),ledger,friends:state?.friends ?? null,referralError:state?.referralError ?? ''};
+        for (const record of [...deposits,...withdrawals,...messages]) if (!users.some(u => u.id === record.user_id)) throw new Error('A record refers to a missing or inaccessible profile. Contact Admin.');
+        const next = {users,deposits:deposits.sort((a,b) => new Date(b.created_at)-new Date(a.created_at)),withdrawals:withdrawals.sort((a,b) => new Date(b.created_at)-new Date(a.created_at)),messages:messages.sort((a,b) => new Date(b.created_at)-new Date(a.created_at)),wallets:Object.fromEntries(walletRows.map(w => [w.network,w.address])),ledger,friends:state?.friends ?? null,referralError:state?.referralError ?? ''};
         const changed = JSON.stringify(state) !== JSON.stringify(next);
-        state = next; lastSync = new Date(); loading = false; screenError = '';
-        status(`Live Supabase records · Last sync ${lastSync.toLocaleTimeString()}`,true);
-        if (!quiet || changed) render();
+        state = next; loading = false; screenError = '';
+        if (!quiet || changed || needsRender) {
+          if (quiet && document.activeElement?.closest('form')) needsRender = true;
+          else render();
+        }
       } catch (error) {
         if (version !== epoch || authUser?.id !== id) return;
         if (error.code === 'ACCOUNT_BANNED') return await denyBanned();
-        console.error('Supabase data load:',error.message);
-        screenError = error.message || 'Unable to load data from Supabase.'; state = null; access = null; loading = false;
-        status('Live database request failed. No substitute data is shown.'); render();
+        console.error('Account data:',error.message); screenError = error.message; state = null; access = null; loading = false; render();
       }
     })();
     syncJob = {id,version,promise:task};
@@ -366,12 +461,9 @@ document.addEventListener('DOMContentLoaded', () => {
     catch (error) { if (state && authUser?.id === id) { state.friends = null; state.referralError = error.message; } }
     if (page === 'referral' && state) render();
   }
-  async function afterWrite(message) {
-    await sync(); broadcast?.postMessage({type:'refresh'});
-    if (state && !screenError) toast(message);
-  }
+  async function afterWrite(message) { await sync(); broadcast?.postMessage({type:'refresh'}); if (state && !screenError) toast(message); }
   async function activate(session) {
-    if (!session?.user) { authUser = null; access = null; state = null; loading = false; render(); return; }
+    if (!session?.user) { clearAccount(); render(); return; }
     const previousId = authUser?.id, previousRole = access?.role;
     authUser = session.user; access = null; state = null; epoch++; screenError = ''; loading = true; render();
     const version = epoch;
@@ -381,17 +473,13 @@ document.addEventListener('DOMContentLoaded', () => {
       if (checked.user_id !== session.user.id) throw new Error('Account session validation failed. Sign in again.');
       access = checked;
       if (previousId !== session.user.id || previousRole !== checked.role) { page = 'home'; search = ''; drafts.clear(); }
-      // Server-verified administrators bypass all normal-user signup/password setup paths.
       if (checked.role === 'admin') { authFlow = false; pending = null; authStep = 'details'; }
-      else if (!checked.password_ready) {
-        loading = false; authFlow = true; authMode = 'signup'; authStep = 'password'; pending = {kind:'signup',method:'email',verified:true,target:session.user.email || ''}; render(); return;
-      }
+      else if (!checked.password_ready) { loading = false; authFlow = true; authMode = 'signup'; authStep = 'password'; pending = {kind:'signup',method:'email',verified:true,target:session.user.email || ''}; render(); return; }
       await sync();
     } catch (error) {
       if (version !== epoch || authUser?.id !== session.user.id) return;
       if (error.code === 'ACCOUNT_BANNED') return await denyBanned();
-      access = null; state = null; loading = false; screenError = error.message || 'Unable to verify account permissions.';
-      status('Account permissions could not be verified. Dashboard access is blocked.'); render();
+      access = null; state = null; loading = false; screenError = error.message; render();
     }
   }
   async function openRecovery(session) {
@@ -399,37 +487,34 @@ document.addEventListener('DOMContentLoaded', () => {
     epoch++; authUser = session.user; access = null; state = null; loading = true; authFlow = true; render();
     const version = epoch, checked = await verifyAccess(session.access_token);
     if (version !== epoch || authUser?.id !== session.user.id) return;
-    if (checked.user_id !== session.user.id) throw new Error('Recovery session validation failed.');
-    if (checked.role === 'admin') {
-      authFlow = false; await activate(session); if (state) toast('Admin Dashboard opened. Existing administrator credentials were not changed.'); return;
-    }
+    if (checked.user_id !== session.user.id) throw new Error('Recovery account validation failed.');
+    if (checked.role === 'admin') { authFlow = false; await activate(session); if (state) toast('Admin Dashboard opened. Existing administrator credentials were not changed.'); return; }
     access = checked; loading = false; authMode = 'recovery'; authStep = 'password'; pending = {kind:'recovery',method:'email',verified:true,target:session.user.email || ''}; authError = ''; render();
   }
   async function authSettings() {
     const controller = new AbortController(), timer = setTimeout(() => controller.abort(),15000);
     try {
-      // A publishable key belongs in apikey, not in a JWT Authorization header.
       const response = await fetch(`${URL_SUPABASE}/auth/v1/settings`,{headers:{apikey:PUBLIC_KEY},signal:controller.signal});
       const data = await response.json();
-      if (!response.ok) throw new Error(`Supabase Auth [HTTP ${response.status}]: ${data.msg || data.message || data.error_description || 'Connection failed.'}`);
+      if (!response.ok) throw new Error(`Authentication [HTTP ${response.status}]: ${data.msg || data.message || data.error_description || 'Connection failed.'}`);
       return data;
     } finally { clearTimeout(timer); }
   }
   async function initialize() {
-    loading = true; screenError = ''; render(); status('Connecting to your Supabase project…');
+    screenError = ''; render();
     try {
       if (!sb) {
-        if (!window.supabase?.createClient) throw new Error('The Supabase SDK could not load. Check your internet connection or CDN access and retry.');
+        if (!window.supabase?.createClient) throw new Error('The account service could not load. Check your internet connection and retry.');
         sb = window.supabase.createClient(URL_SUPABASE,PUBLIC_KEY,{auth:{flowType:'pkce',persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
         sb.auth.onAuthStateChange((event,session) => {
-          // Avoid awaiting database/Auth calls inside the Supabase auth callback.
+          const eventEpoch = epoch;
+          // Avoid database/Auth calls inside the SDK auth callback.
           setTimeout(async () => {
+            if (eventEpoch !== epoch) return;
             try {
-              if (event === 'PASSWORD_RECOVERY') {
-                await openRecovery(session);
-              } else if (event === 'SIGNED_OUT') {
-                epoch++; authUser = null; access = null; state = null; loading = false; drafts.clear(); if (!authFlow) render();
-              } else if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && session && !authFlow && connected) {
+              if (event === 'PASSWORD_RECOVERY' && !authFlow) await openRecovery(session);
+              else if (event === 'SIGNED_OUT') { clearAccount(); if (!authFlow) render(); }
+              else if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && session && !authFlow && connected) {
                 if (authUser?.id === session.user.id && state) { authUser = session.user; return; }
                 await activate(session);
               }
@@ -437,81 +522,67 @@ document.addEventListener('DOMContentLoaded', () => {
           },0);
         });
       }
-      const [config, sessionResult] = await Promise.all([authSettings(),sb.auth.getSession()]);
+      void loadAdverts();
+      const [config,sessionResult] = await Promise.all([authSettings(),sb.auth.getSession()]);
       if (sessionResult.error) throw sessionResult.error;
-      settings = config; connected = true; loading = false;
+      settings = config; connected = true;
       const callbackError = query.get('error_description') || hashParams.get('error_description');
-      if (callbackError) { authError = callbackError; history.replaceState({},document.title,location.pathname + (query.has('ref') ? `?ref=${encodeURIComponent(query.get('ref'))}` : '')); }
-      status('',true);
+      if (callbackError) { authError = callbackError; history.replaceState({},document.title,location.pathname+(query.has('ref') ? `?ref=${encodeURIComponent(query.get('ref'))}` : '')); }
       const session = sessionResult.data.session;
       if (session && initialRecovery) await openRecovery(session);
       else if (session && !authFlow) await activate(session);
       else render();
     } catch (error) {
       connected = false; loading = false; access = null; state = null;
-      screenError = error.name === 'AbortError' ? 'Supabase did not respond within 15 seconds. Check your connection and retry.' : error.message || 'Unable to connect to Supabase.';
-      status('Supabase connection failed. No demonstration data is available.'); render();
+      screenError = error.name === 'AbortError' ? 'The account service did not respond within 15 seconds. Check your connection and retry.' : error.message; render();
     }
   }
-  async function resetAuthMode(mode = 'login') {
-    if (authFlow && authUser) { const {error} = await sb.auth.signOut({scope:'local'}); if (error) throw error; }
-    epoch++; authFlow = false; authUser = null; access = null; state = null; pending = null; authError = ''; screenError = ''; loading = false; authMode = mode; authStep = 'details'; render();
+  async function resetAuthMode(mode='login') {
+    if (authFlow && authUser && sb) { const {error} = await sb.auth.signOut({scope:'local'}); if (error) throw error; }
+    clearAccount(); authFlow = false; pending = null; authError = ''; authMode = mode; authStep = 'details'; render();
   }
   async function sendPendingCode() {
-    if (!pending || pending.method !== 'email' || !pending.target) throw new Error('Start email verification again.');
-    if (settings?.external?.email === false) throw new Error('Email authentication is disabled in Supabase. Ask Admin to enable the Email provider.');
-    // Signup and every resend are checked server-side before requesting an email code.
-    // A 409 conflict is displayed clearly; it never changes an existing administrator.
+    if (!pending?.target || pending.method !== 'email') throw new Error('Start email verification again.');
+    if (settings?.external?.email === false) throw new Error('Email verification is unavailable. Please contact Admin.');
     if (pending.kind === 'signup') {
       const result = await edge('account-access',{action:'signup',email:pending.target,metadata:pending.metadata});
-      if (result.sent !== true) throw new Error('Supabase did not confirm the code request. Please retry.');
-      return;
+      if (result.sent !== true) throw new Error('The code request was not confirmed. Please retry.'); return;
     }
-    // Supabase email templates must contain {{ .Token }} for code-only emails.
-    const {error} = await sb.auth.resetPasswordForEmail(pending.target,{redirectTo:`${location.origin}${location.pathname}`});
-    if (error) throw new Error(error.message);
+    const {error} = await sb.auth.resetPasswordForEmail(pending.target,{redirectTo:`${location.origin}${location.pathname}`}); if (error) throw error;
   }
   function openAck() {
-    modal('Confirm your network',`<div class="border border-gold/30 rounded-xl p-4 bg-gold/5"><p class="font-semibold">You chose ${network} / ${network === 'BSC' ? 'BEP20' : 'TRC20'}.</p><p class="text-sm text-muted leading-relaxed mt-3">Select the SAME network in your ${page === 'invest' ? 'sending' : 'receiving'} wallet. Only ${page === 'invest' ? 'send' : 'receive'} USDT.</p><p class="text-red-300 text-sm mt-3">Wrong network = Money LOST forever. No refund.</p></div><button data-action="understand" class="${primary} w-full mt-5">I Understand</button>`);
+    modal('Confirm your network',`<div class="border border-gold/30 rounded-xl p-4 bg-gold/5"><p class="font-semibold">You chose ${network} / ${network === 'BSC' ? 'BEP20' : 'TRC20'}.</p><p class="text-sm text-muted leading-relaxed mt-3">Select the SAME network in your ${page === 'invest' ? 'sending' : 'receiving'} wallet. Only use USDT.</p><p class="text-red-300 text-sm mt-3">Wrong network = Money LOST forever. No refund.</p></div><button data-action="understand" class="${primary} w-full mt-5">I Understand</button>`);
   }
   function confirmFinancialAction(action,id) {
     if (me()?.role !== 'admin') throw new Error('Administrator access required.');
     const deposit = action.includes('deposit'), approve = action.startsWith('approve'), record = (deposit ? state.deposits : state.withdrawals).find(r => r.id === id);
-    if (!record || record.status !== 'pending') throw new Error('This request is already processed or unavailable. Refresh your records.');
-    modal(`${approve ? 'Approve' : 'Reject'} ${deposit ? 'deposit' : 'withdrawal'}?`, `<p class="text-sm text-muted leading-relaxed">${esc(findUser(record.user_id).name)} · ${money(record.amount)} · ${record.network}</p><p class="text-sm mt-4 leading-relaxed">${approve ? deposit ? 'Confirm that the USDT payment actually reached the correct deposit wallet. Approval credits capital in the database.' : `Approval deducts ${money(record.amount)} from ${record.type === 'daily' ? 'daily earnings' : 'capital'} and archives this request. ${record.type === 'capital' ? 'Daily compounding stops immediately.' : ''} The application does not send cryptocurrency.` : 'The request will move to History. No balance will be deducted or credited.'}</p><form id="process-form" data-operation="${action}" data-record="${id}" class="mt-5">${approve ? `<label class="flex gap-3 items-start text-sm text-muted mb-5"><input required type="checkbox" class="mt-1 accent-amber-400">${deposit ? 'I independently verified the payment on the correct blockchain.' : `I have independently paid and verified the net payout of ${money(record.net_amount)} to this user's wallet.`}</label>` : ''}<button class="${primary} w-full">${approve ? 'Confirm approval' : 'Confirm rejection'}</button></form>`);
+    if (!record || record.status !== 'pending') throw new Error('This request is processed or unavailable. Refresh your records.');
+    modal(`${approve ? 'Approve' : 'Reject'} ${deposit ? 'deposit' : 'withdrawal'}?`,`<p class="text-sm text-muted leading-relaxed">${esc(findUser(record.user_id).name)} · ${money(record.amount)} · ${record.network}</p><p class="text-sm mt-4 leading-relaxed">${approve ? deposit ? 'Confirm that the USDT payment reached the correct deposit wallet. Approval credits capital.' : `Approval deducts ${money(record.amount)} from ${record.type === 'daily' ? 'earnings' : 'capital'} and archives this request. ${record.type === 'capital' ? 'Daily compounding stops immediately.' : ''} The application does not send cryptocurrency.` : 'This request moves to History. No balance is deducted or credited.'}</p><form id="process-form" data-operation="${action}" data-record="${id}" class="mt-5">${approve ? `<label class="flex gap-3 items-start text-sm text-muted mb-5"><input required type="checkbox" class="mt-1 accent-amber-400">${deposit ? 'I independently verified the payment on the correct blockchain.' : `I independently paid and verified the net payout of ${money(record.net_amount)} to this user's wallet.`}</label>` : ''}<button type="submit" class="${primary} w-full">${approve ? 'Confirm approval' : 'Confirm rejection'}</button></form>`);
   }
-  document.addEventListener('click', async e => {
+  document.addEventListener('click',async e => {
     const b = e.target.closest('[data-action]'); if (!b || b.disabled || busy) return;
     const action = b.dataset.action, value = b.dataset.value, id = b.dataset.id;
     try {
       if (action === 'toggle-password') {
-        const field = $(b.dataset.target);
-        if (!field || !field.dataset.visibilityControl) return;
-        const visible = field.type === 'password';
-        field.type = visible ? 'text' : 'password';
-        b.setAttribute('aria-pressed', String(visible));
-        b.setAttribute('aria-label', visible ? 'Hide password' : 'Show password');
-        b.title = visible ? 'Hide password' : 'Show password';
-        b.innerHTML = icon(visible ? 'eye-slash' : 'eye');
-        return;
+        const field = $(b.dataset.target); if (!field?.dataset.visibilityControl) return;
+        const visible = field.type === 'password'; field.type = visible ? 'text' : 'password';
+        b.setAttribute('aria-pressed',String(visible)); b.setAttribute('aria-label',visible ? 'Hide password' : 'Show password'); b.title = visible ? 'Hide password' : 'Show password'; b.innerHTML = icon(visible ? 'eye-slash' : 'eye'); return;
       }
+      if (action === 'retry-adverts') { await loadAdverts(); return; }
+      if (action === 'all-adverts') { modal('All announcements',`<div class="space-y-5">${advertisements.map(a => advertCard(a)).join('')}</div>`); return; }
       if (action === 'auth-mode' || action === 'auth-back') return await resetAuthMode(action === 'auth-mode' ? value : 'login');
       if (action === 'forgot') return await resetAuthMode('recovery');
-      if (action === 'retry') { if (connected && authUser) return await sync(); return await initialize(); }
-      if (action === 'logout') {
-        const {error} = await sb.auth.signOut({scope:'local'}); if (error) throw error;
-        authUser = null; access = null; state = null; epoch++; drafts.clear(); authFlow = false; loading = false; screenError = ''; authError = ''; authMode = 'login'; authStep = 'details'; pending = null;
-        status('',true); render(); return;
-      }
-      if (action === 'resend') {
-        busy = true; b.disabled = true; await sendPendingCode(); toast('A new verification code was requested. Check your email.'); return;
-      }
+      if (action === 'retry') { if (connected && authUser) await sync(); else await initialize(); return; }
+      if (action === 'logout') { busy = true; b.disabled = true; await logout(); return; }
+      if (action === 'resend') { busy = true; b.disabled = true; await sendPendingCode(); toast('A new verification code was requested. Check your email.'); return; }
       if (!me()) throw new Error('Sign in and load your account to continue.');
       if (action === 'nav') {
+        const nav = me().role === 'admin' ? adminNav : userNav; if (!nav.some(n => n[0] === value)) throw new Error('This page is unavailable.');
         page = value; search = ''; ack = false; render(); window.scrollTo({top:0,behavior:'instant'});
         if (page === 'account') { await rpc('cr_mark_messages_read',{}); await sync(); }
         if (page === 'referral' && me()?.role !== 'admin') await loadReferrals();
-      } else if (action === 'refresh') { await sync(); if (page === 'referral' && me()?.role !== 'admin') await loadReferrals(); if (state) toast('Live records refreshed.'); }
+        if (page === 'adverts') void loadAdverts();
+      } else if (action === 'refresh') { await Promise.all([sync(),loadAdverts()]); if (page === 'referral' && me()?.role !== 'admin') await loadReferrals(); if (state) toast('Records refreshed.'); }
       else if (action === 'load-referrals') await loadReferrals();
       else if (action === 'amount') { depositAmount = Number(value); render(); }
       else if (action === 'network') { network = value; ack = false; render(); }
@@ -522,221 +593,196 @@ document.addEventListener('DOMContentLoaded', () => {
       else if (action === 'copy-wallet') { if (!ack || !state.wallets[network]) throw new Error('Confirm the network before copying an address.'); await copy(state.wallets[network]); }
       else if (action === 'copy-value') await copy(value);
       else if (action === 'copy-referral') await copy(`${location.origin}${location.pathname}?ref=${encodeURIComponent(authUser.id)}`);
-      else if (action === 'ban') {
+      else if (action === 'delete-advert') {
+        if (me().role !== 'admin') throw new Error('Administrator access required.');
+        const advert = advertisements.find(a => a.id === id); if (!advert) throw new Error('This advert is unavailable. Refresh announcements.');
+        modal('Remove this advert?',`<p class="text-sm leading-relaxed text-muted">${esc(advert.title)} will be removed from the homepage for everyone.</p><form id="delete-advert-form" data-record="${esc(id)}" class="mt-5"><button type="submit" class="${primary} w-full">Remove advert</button></form>`);
+      } else if (action === 'ban') {
         if (me().role !== 'admin') throw new Error('Administrator access required.');
         const target = findUser(id); if (!target || target.role === 'admin') throw new Error('This account cannot be banned.');
-        modal(target.banned ? 'Restore user access?' : 'Ban this user?',`<p class="text-sm text-muted leading-relaxed">${esc(target.name)}: ${target.banned ? 'Restore access and resume accrual from now. Banned days are not credited.' : 'Block Supabase sign-in, deposits, withdrawals, messages, and daily accrual. Existing balances and history remain saved.'}</p><form id="ban-form" data-record="${id}" data-ban="${!target.banned}" class="mt-5"><button class="${primary} w-full">${target.banned ? 'Unban User' : 'Ban User'}</button></form>`);
+        modal(target.banned ? 'Restore user access?' : 'Ban this user?',`<p class="text-sm text-muted leading-relaxed">${esc(target.name)}: ${target.banned ? 'Restore access and resume accrual from now. Banned days are not credited.' : 'Block sign-in, deposits, withdrawals, messages, and accrual. Existing balances and history remain saved.'}</p><form id="ban-form" data-record="${id}" data-ban="${!target.banned}" class="mt-5"><button type="submit" class="${primary} w-full">${target.banned ? 'Unban User' : 'Ban User'}</button></form>`);
       } else if (['approve-deposit','reject-deposit','approve-withdrawal','reject-withdrawal'].includes(action)) confirmFinancialAction(action,id);
-    } catch (error) { console.error('Action failed:',error.message); toast(error.message); }
-    finally { busy = false; if (b.isConnected) b.disabled = false; }
+    } catch (error) { console.error('Action:',error.message); toast(error.message); }
+    finally { busy = false; if (b.isConnected && ['logout','resend'].includes(action)) b.disabled = false; }
   });
-  document.addEventListener('change',e => { captureDraft(e.target); });
-  function captureDraft(field) {
-    const form = field.closest('form[data-draft]'); if (!form || !field.name || field.readOnly || field.type === 'password' || field.dataset.visibilityControl) return;
-    drafts.set(form.dataset.draft,{...(drafts.get(form.dataset.draft) || {}),[field.name]:field.value});
-  }
+  document.addEventListener('change',e => captureDraft(e.target));
   document.addEventListener('input',e => {
     captureDraft(e.target);
     if (e.target.id === 'withdraw-amount') updateWithdrawalPreview();
     if (e.target.id === 'search') { search = e.target.value; render(); $('search')?.focus(); }
   });
+  function clearCredentialFields(form) {
+    form.querySelectorAll('input[data-visibility-control]').forEach(field => {
+      field.value = ''; field.type = 'password';
+      const control = field.parentElement.querySelector('[data-action="toggle-password"]');
+      if (control) { control.setAttribute('aria-pressed','false'); control.setAttribute('aria-label','Show password'); control.title = 'Show password'; control.innerHTML = icon('eye'); }
+    });
+  }
   document.addEventListener('submit',async e => {
     e.preventDefault(); if (busy) return;
-    const form = e.target, fd = new FormData(form), button = form.querySelector('button[type="submit"],button:not([type])');
-    busy = true; const oldText = button?.textContent;
-    if (button) { button.disabled = true; button.textContent = 'Please wait…'; } form.setAttribute('aria-busy','true');
-    const isAuth = ['auth-form','verify-form','recovery-form'].includes(form.id);
-    const isAdminCredentials = form.id === 'admin-login-form';
-    if (isAdminCredentials) form.querySelector('[role="alert"]')?.classList.add('hidden');
+    const form = e.target, fd = new FormData(form), button = form.querySelector('button[type="submit"]');
+    const oldText = button?.textContent, isAuth = ['auth-form','verify-form','recovery-form'].includes(form.id), isCredentials = form.id === 'admin-login-form', isAdvert = form.id === 'advert-form';
+    busy = true; if (button) { button.disabled = true; button.textContent = 'Please wait…'; } form.setAttribute('aria-busy','true');
+    if (isCredentials || isAdvert) form.querySelector('[role="alert"]')?.classList.add('hidden');
     try {
-      if (!sb || !connected) throw new Error('Supabase is not connected. Retry the connection; no offline authentication is available.');
+      if (!sb || !connected) throw new Error('Account services are unavailable. Retry the connection; no offline authentication is available.');
       if (form.id === 'auth-form') {
         authError = '';
         if (authMode === 'login') {
           authFlow = true;
           const tokens = await edge('account-access',{action:'login',identity:String(fd.get('identity')).trim(),password:fd.get('password')});
-          const {data,error} = await sb.auth.setSession({access_token:tokens.access_token,refresh_token:tokens.refresh_token});
-          if (error) throw error;
+          const {data,error} = await sb.auth.setSession({access_token:tokens.access_token,refresh_token:tokens.refresh_token}); if (error) throw error;
           pending = null; authFlow = false; await activate(data.session);
         } else {
           const normalizedPhone = phone(fd.get('phone')), name = String(fd.get('name')).trim(), email = String(fd.get('email')).trim().toLowerCase();
           if (!name) throw new Error('Enter your full name.');
-          if (normalizedPhone && !isPhone(normalizedPhone)) throw new Error('Enter an international phone number beginning with + and country code, or leave the optional phone field blank.');
-          if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 254) throw new Error('Enter a valid email address to receive your verification code.');
+          if (normalizedPhone && !isPhone(normalizedPhone)) throw new Error('Use an international phone number beginning with + and country code, or leave the optional field blank.');
+          if (!validEmail(email)) throw new Error('Enter a valid email address.');
           const referrer = query.get('ref');
           pending = {kind:'signup',method:'email',target:email,verified:false,metadata:{full_name:name,phone:normalizedPhone,country:fd.get('country'),password_ready:false,...(referrer && /^[0-9a-f-]{36}$/i.test(referrer) ? {referrer} : {})}};
           authFlow = true; await sendPendingCode(); authStep = 'verify'; render();
         }
       } else if (form.id === 'recovery-form') {
-        const target = String(fd.get('identity')).trim().toLowerCase();
-        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(target)) throw new Error('Enter the email address verified when creating your account.');
-        if (target.length > 254) throw new Error('Enter a valid email address.');
-        pending = {kind:authMode === 'admin-recovery' ? 'admin-recovery' : 'recovery',method:'email',target,verified:false}; authFlow = true; authError = '';
-        await sendPendingCode(); authStep = 'verify'; render();
+        const target = String(fd.get('identity')).trim().toLowerCase(); if (!validEmail(target)) throw new Error('Enter your verified email address.');
+        pending = {kind:'recovery',method:'email',target,verified:false}; authFlow = true; authError = ''; await sendPendingCode(); authStep = 'verify'; render();
       } else if (form.id === 'verify-form') {
         if (!pending) throw new Error('Start account verification again.');
-        if (pending.kind === 'admin-recovery') {
-          const email = String(fd.get('email')).trim().toLowerCase(), password = String(fd.get('password'));
-          if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 254) throw new Error('Enter a valid new administrator email address.');
-          if (password.length < 8 || password.length > 1024) throw new Error('Your new password must contain between 8 and 1,024 characters.');
-          if (password !== String(fd.get('confirm_password'))) throw new Error('The new passwords do not match.');
-          // The Edge Function verifies a fresh RECOVERY code itself; a normal
-          // login session cannot be used to bypass current-password verification.
-          const previousEmail = pending.target;
-          const result = await edge('account-access',{action:'recover-admin-login',current_email:previousEmail,code:String(fd.get('code')).trim(),email,new_password:password});
-          if (result.role !== 'admin' || typeof result.user_id !== 'string' || result.password_updated !== true) throw new Error('The server did not confirm the recovery update. Check your inboxes and sign in again before requesting another code.');
-          pending = null; authError = ''; authStep = 'details';
-          const instructions = result.email_confirmation_pending
-            ? 'Your new password is saved. Confirm the email-change instructions sent by Supabase to your previous and new inboxes. Until confirmation is complete, sign in with your previous email and new password.'
-            : result.email_change_requested
-              ? 'Supabase reports your new email on the existing account and your new password is saved. Use your new login details for future sign-ins.'
-              : 'Your new password is saved. Your administrator email is unchanged.';
-          if (result.access_token && result.refresh_token) {
-            const {data,error} = await sb.auth.setSession({access_token:result.access_token,refresh_token:result.refresh_token});
-            if (error || !data.session || data.session.user.id !== result.user_id) {
-              await resetAuthMode('login');
-              modal('Login details updated',`<p class="text-sm leading-relaxed">${esc(instructions)}</p><p class="text-xs text-muted mt-4">The browser session could not be restored. Sign in again using the instructions above.</p>`);
-              return;
-            }
-            authFlow = false;
-            await activate(data.session);
-          } else await resetAuthMode('login');
-          modal('Administrator login recovered',`<div class="flex gap-3 items-start text-sm leading-relaxed">${icon('shield-halved','text-gold mt-1')}<p>${esc(instructions)}</p></div><p class="text-xs text-muted mt-4 leading-relaxed">Your existing administrator account, role, phone ownership, balances, and history are preserved. No new account was created.${result.warning ? ` ${esc(result.warning)}` : ''}</p>`);
-          return;
-        }
         if (!pending.verified) {
-          if (pending.method !== 'email') throw new Error('Start email verification again.');
-          const params = {email:pending.target,token:String(fd.get('code')).trim(),type:pending.kind === 'recovery' ? 'recovery' : 'email'};
-          const {data,error} = await sb.auth.verifyOtp(params); if (error) throw error;
-          if (!data.session || !data.user) throw new Error('Supabase did not return a verified session.');
+          const {data,error} = await sb.auth.verifyOtp({email:pending.target,token:String(fd.get('code')).trim(),type:pending.kind === 'recovery' ? 'recovery' : 'email'});
+          if (error) throw error; if (!data.session || !data.user) throw new Error('A verified session was not returned.');
           pending.verified = true; authUser = data.user; authStep = 'password';
         }
         const {data:sessionData,error:sessionError} = await sb.auth.getSession(); if (sessionError) throw sessionError;
-        if (!sessionData.session) throw new Error('Your verification session expired. Start verification again.');
-        // Verify the existing role BEFORE changing a normal user's password.
+        if (!sessionData.session) throw new Error('Your verification session expired. Start again.');
         const checked = await verifyAccess(sessionData.session.access_token);
         if (checked.user_id !== sessionData.session.user.id) throw new Error('Account session validation failed.');
-        if (checked.role === 'admin') {
-          pending = null; authFlow = false; authError = ''; authStep = 'details'; await activate(sessionData.session);
-          if (state) toast('Admin Dashboard opened. Existing administrator credentials were not changed.'); return;
-        }
-        const {error} = await sb.auth.updateUser({password:String(fd.get('password')),data:{password_ready:true}}); if (error) throw error;
-        const {data:updatedSession,error:updatedError} = await sb.auth.getSession(); if (updatedError) throw updatedError;
-        if (!updatedSession.session) throw new Error('Your session expired. Sign in again.');
-        pending = null; authFlow = false; authError = ''; authStep = 'details'; await activate(updatedSession.session); if (state) toast('Your password is saved and your account is signed in.');
+        // Administrator sessions never enter normal-user password setup or change an existing role.
+        if (checked.role === 'admin') { pending = null; authFlow = false; authError = ''; authStep = 'details'; await activate(sessionData.session); if (state) toast('Admin Dashboard opened. Existing administrator credentials were not changed.'); return; }
+        const password = String(fd.get('password')); if (password.length < 8 || password.length > 1024) throw new Error('Use a password between 8 and 1,024 characters.');
+        const {error} = await sb.auth.updateUser({password,data:{password_ready:true}}); if (error) throw error;
+        const {data:updated,error:updatedError} = await sb.auth.getSession(); if (updatedError) throw updatedError;
+        if (!updated.session) throw new Error('Your session expired. Sign in again.');
+        pending = null; authFlow = false; authError = ''; authStep = 'details'; await activate(updated.session); if (state) toast('Your password is saved and your account is signed in.');
       } else {
         const u = me(); if (!u || u.banned) throw new Error('Your account is unavailable. Sign in again or contact Admin.');
-        if (form.id === 'deposit-form') {
-          if (!ack || !state.wallets[network]) throw new Error('Confirm the network and verify a configured deposit address.');
-          const proof = String(fd.get('proof')).trim(); if (proof.length < 8 || proof.length > 500) throw new Error('Enter a transaction hash or proof of 8–500 characters.');
-          await rpc('cr_request_deposit',{p_amount:depositAmount,p_network:network,p_proof:proof}); drafts.delete(form.dataset.draft); ack = false; await afterWrite('Deposit submitted to Supabase. Awaiting admin review.');
+        if (form.id === 'advert-form' || form.id === 'delete-advert-form') {
+          if (u.role !== 'admin') throw new Error('Administrator access required.');
+          const checked = await verifyAccess(); if (checked.role !== 'admin' || checked.user_id !== u.id) throw new Error('Administrator permissions could not be verified.');
+          if (form.id === 'advert-form') {
+            const title = String(fd.get('title')||'').trim(), message = String(fd.get('message')||'').trim();
+            const rawImage = String(fd.get('image_url')||'').trim(), rawLink = String(fd.get('link_url')||'').trim(), image = secureUrl(rawImage), link = secureUrl(rawLink);
+            if (!title || title.length > 120) throw new Error('Enter a title of 1–120 characters.');
+            if (!message || message.length > 2000) throw new Error('Enter a message of 1–2,000 characters.');
+            if (rawImage && !image) throw new Error('Use a valid HTTPS image URL, up to 2,048 characters.');
+            if (rawLink && !link) throw new Error('Use a valid HTTPS website link, up to 2,048 characters.');
+            // Row security rechecks the protected administrator role in the database.
+            const {data,error} = await sb.from('advertisements').insert({title,message,image_url:image||null,link_url:link||null,created_by:u.id}).select(advertColumns).single();
+            if (error) throw new Error(`Advert was not sent: ${error.message}`); if (!data?.id) throw new Error('Publishing was not confirmed. Refresh announcements before retrying.');
+            advertisements = [data,...advertisements.filter(a => a.id !== data.id)]; advertError = ''; drafts.delete(form.dataset.draft); form.reset(); refreshAdvertViews();
+            broadcast?.postMessage({type:'refresh'}); toast('Advert sent. It is visible on the homepage to all visitors and users.'); void loadAdverts();
+          } else {
+            const {data,error} = await sb.from('advertisements').delete().eq('id',form.dataset.record).select('id');
+            if (error) throw new Error(`Advert was not removed: ${error.message}`); if (!data?.length) throw new Error('The advert was removed already or permission was denied. Refresh announcements.');
+            advertisements = advertisements.filter(a => a.id !== form.dataset.record); $('modal').close(); refreshAdvertViews(); broadcast?.postMessage({type:'refresh'}); toast('Advert removed from the homepage.'); void loadAdverts();
+          }
+        } else if (form.id === 'deposit-form') {
+          if (!ack || !state.wallets[network]) throw new Error('Confirm the network and a configured deposit address.');
+          const proof = String(fd.get('proof')).trim(); if (proof.length < 8 || proof.length > 500) throw new Error('Enter transaction proof of 8–500 characters.');
+          await rpc('cr_request_deposit',{p_amount:depositAmount,p_network:network,p_proof:proof}); drafts.delete(form.dataset.draft); ack = false; await afterWrite('Deposit submitted. Awaiting admin review.');
         } else if (form.id === 'withdraw-form') {
           if (!ack) throw new Error('Confirm the network safety notice.');
           const address = String(fd.get('address')).trim(), amount = Number(fd.get('amount'));
           if (!validAddress(network,address)) throw new Error('The address format does not match the chosen network.');
-          if (!Number.isFinite(amount) || amount <= 0 || Math.abs(amount * 100 - Math.round(amount * 100)) > .000001) throw new Error('Enter a valid amount with no more than two decimal places.');
+          if (!Number.isFinite(amount) || amount <= 0 || Math.abs(amount*100-Math.round(amount*100)) > .000001) throw new Error('Enter a valid amount with no more than two decimal places.');
           await rpc('cr_request_withdrawal',{p_type:withdrawType,p_network:network,p_address:address,p_amount:amount}); drafts.delete(form.dataset.draft); ack = false; await afterWrite('Withdrawal submitted. No balance is deducted until approval.');
         } else if (form.id === 'message-form') {
           const body = String(fd.get('text')).trim(); if (!body) throw new Error('Enter a message.');
           await rpc('cr_send_message',{p_body:body}); drafts.delete(form.dataset.draft); await afterWrite('Your private message was sent to Admin.');
         } else if (form.id === 'profile-form') {
           const name = String(fd.get('name')).trim(); if (!name) throw new Error('Enter your name.');
-          const {data,error} = await sb.from('profiles').update({full_name:name,country:fd.get('country')}).eq('id',u.id).select('id'); if (error) throw error;
-          if (!data?.length) throw new Error('Your profile was not updated. Check account permissions.');
-          drafts.delete(form.dataset.draft); await afterWrite('Your profile was saved to Supabase.');
-        } else if (form.id === 'admin-login-form') {
-          if (u.role !== 'admin') throw new Error('Administrator access required.');
-          const email = String(fd.get('email')).trim().toLowerCase();
-          const currentPassword = String(fd.get('current_password')), newPassword = String(fd.get('new_password'));
-          if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 254) throw new Error('Enter a valid new email address.');
-          if (newPassword.length < 8 || newPassword.length > 1024) throw new Error('Your new password must contain between 8 and 1,024 characters.');
-          if (newPassword !== String(fd.get('confirm_password'))) throw new Error('The new passwords do not match.');
-          if (newPassword === currentPassword) throw new Error('Choose a password different from your current password.');
-          // Never store credentials in drafts, browser storage, or client logs.
-          authFlow = true;
-          let result;
-          try {
-            result = await edge('account-access',{action:'change-admin-login',email,current_password:currentPassword,new_password:newPassword});
-            if (result.user_id !== u.id || result.role !== 'admin' || result.password_updated !== true) throw new Error('Supabase did not confirm the administrator update. Sign in again to check your account.');
-            if (result.access_token && result.refresh_token) {
-              const {data,error} = await sb.auth.setSession({access_token:result.access_token,refresh_token:result.refresh_token});
-              if (error || !data.session) {
-                throw new Error('Your password was updated, but the browser session could not refresh. Sign out and use your new password. Check both inboxes if you requested an email change.');
-              }
-              authFlow = false;
-              await activate(data.session);
-            } else {
-              const {error} = await sb.auth.signOut({scope:'local'});
-              if (error) throw new Error('Your password was updated. Sign in again with your new password; check both inboxes for any email change confirmation.');
-              await resetAuthMode('login');
-            }
-          } finally {
-            authFlow = false;
-            form.querySelectorAll('input[data-visibility-control]').forEach(field => { field.value = ''; field.type = 'password'; const control = field.parentElement.querySelector('[data-action="toggle-password"]'); if (control) { control.setAttribute('aria-pressed','false'); control.setAttribute('aria-label','Show password'); control.title = 'Show password'; control.innerHTML = icon('eye'); } });
-          }
-          const instructions = result.email_confirmation_pending
-            ? 'Your new password is saved. Follow the email-change confirmation instructions sent by Supabase to your current and new email addresses. Until confirmation is complete, use your current email with the new password. Email-change templates are separate from signup templates.'
-            : result.email_change_requested
-              ? 'Your new password is saved and Supabase reports your new email on the existing account. Use your new login details for future sign-ins.'
-              : 'Your new password is saved. Your administrator email is unchanged.';
-          modal('Administrator login updated',`<div class="flex gap-3 items-start text-sm leading-relaxed">${icon('shield-halved','text-gold mt-1')}<p>${esc(instructions)}</p></div><p class="text-xs text-muted leading-relaxed mt-4">Your existing account and Admin Dashboard access are preserved. No account was created and no role, phone number, balance, or history was changed. Other refresh sessions are signed out when possible; already-issued access tokens remain valid until expiry.</p>${result.warning ? `<p role="alert" class="text-sm text-amber-200 mt-4">${esc(result.warning)}</p>` : ''}`);
+          const {data,error} = await sb.from('profiles').update({full_name:name,country:fd.get('country')}).eq('id',u.id).select('id');
+          if (error) throw error; if (!data?.length) throw new Error('Your profile was not updated. Check account permissions.');
+          drafts.delete(form.dataset.draft); await afterWrite('Your profile was saved.');
         } else if (form.id === 'wallet-form') {
           if (u.role !== 'admin') throw new Error('Administrator access required.');
           const bsc = String(fd.get('BSC')).trim(), trx = String(fd.get('TRX')).trim();
           if (!validAddress('BSC',bsc) || !validAddress('TRX',trx)) throw new Error('One of the addresses does not match its network.');
           await rpc('cr_set_wallet',{p_network:'BSC',p_address:bsc});
-          try { await rpc('cr_set_wallet',{p_network:'TRX',p_address:trx}); }
-          catch (error) { await sync(); throw new Error(`BSC was saved, but TRX was not: ${error.message}`); }
-          drafts.delete(form.dataset.draft); await afterWrite('Both deposit wallet addresses were saved to Supabase.');
+          try { await rpc('cr_set_wallet',{p_network:'TRX',p_address:trx}); } catch (error) { await sync(); throw new Error(`BSC was saved, but TRX was not: ${error.message}`); }
+          drafts.delete(form.dataset.draft); await afterWrite('Both deposit wallet addresses were saved.');
         } else if (form.dataset.reply) {
           if (u.role !== 'admin') throw new Error('Administrator access required.');
           const reply = String(fd.get('reply')).trim(); if (!reply) throw new Error('Enter your reply.');
           await rpc('cr_reply_message',{p_id:form.dataset.reply,p_reply:reply}); drafts.delete(form.dataset.draft); await afterWrite('Reply saved for this user only.');
         } else if (form.id === 'process-form') {
           if (u.role !== 'admin') throw new Error('Administrator access required.');
-          const operation = form.dataset.operation, deposit = operation.includes('deposit'), approve = operation.startsWith('approve');
+          const deposit = form.dataset.operation.includes('deposit'), approve = form.dataset.operation.startsWith('approve');
           await rpc(deposit ? 'cr_process_deposit' : 'cr_process_withdrawal',{p_id:form.dataset.record,p_approve:approve});
-          $('modal').close(); await afterWrite(`${deposit ? 'Deposit' : 'Withdrawal'} ${approve ? 'approved' : 'rejected'}. ${approve ? 'Balances updated by the server.' : 'Balances unchanged.'} Request removed from pending lists.`);
+          $('modal').close(); await afterWrite(`${deposit ? 'Deposit' : 'Withdrawal'} ${approve ? 'approved' : 'rejected'}. Request removed from pending lists.`);
         } else if (form.id === 'ban-form') {
           if (u.role !== 'admin') throw new Error('Administrator access required.');
-          const result = await edge('admin-ban-user',{user_id:form.dataset.record,banned:form.dataset.ban === 'true'}); $('modal').close(); await afterWrite(result.warning || (result.banned ? 'User banned. Balances and history retained; accrual stopped.' : 'User access restored. Accrual resumes from now.'));
+          const result = await edge('admin-ban-user',{user_id:form.dataset.record,banned:form.dataset.ban === 'true'});
+          $('modal').close(); await afterWrite(result.warning || (result.banned ? 'User banned. Balances and history retained; accrual stopped.' : 'User access restored. Accrual resumes from now.'));
+        } else if (form.id === 'admin-login-form') {
+          if (u.role !== 'admin') throw new Error('Administrator access required.');
+          const email = String(fd.get('email')).trim().toLowerCase(), currentPassword = String(fd.get('current_password')), newPassword = String(fd.get('new_password'));
+          if (!validEmail(email)) throw new Error('Enter a valid new email address.');
+          if (newPassword.length < 8 || newPassword.length > 1024) throw new Error('Use a password between 8 and 1,024 characters.');
+          if (newPassword !== String(fd.get('confirm_password'))) throw new Error('The new passwords do not match.');
+          if (currentPassword === newPassword) throw new Error('Choose a password different from your current password.');
+          authFlow = true; let result;
+          try {
+            result = await edge('account-access',{action:'change-admin-login',email,current_password:currentPassword,new_password:newPassword});
+            if (result.user_id !== u.id || result.role !== 'admin' || result.password_updated !== true) throw new Error('The administrator update was not confirmed. Sign in again to check your account.');
+            if (result.access_token && result.refresh_token) {
+              const {data,error} = await sb.auth.setSession({access_token:result.access_token,refresh_token:result.refresh_token});
+              if (error || !data.session || data.session.user.id !== u.id) throw new Error('Your password was updated, but the browser session could not refresh. Sign out and use your new password. Check both inboxes for an email change.');
+              authFlow = false; await activate(data.session);
+            } else { const {error} = await sb.auth.signOut({scope:'local'}); if (error) throw error; await resetAuthMode('login'); }
+          } finally { authFlow = false; clearCredentialFields(form); }
+          const instructions = result.email_confirmation_pending ? 'Your new password is saved. Confirm the email-change instructions in your current and new inboxes. Until confirmed, use your current email and new password.' : result.email_change_requested ? 'Your new password is saved and your new email is reported on the existing account. Use your new details for future sign-ins.' : 'Your new password is saved. Your administrator email is unchanged.';
+          modal('Administrator login updated',`<p class="text-sm leading-relaxed">${esc(instructions)}</p><p class="text-xs text-muted leading-relaxed mt-4">Your existing account, administrator role, phone number, balances, and history are preserved. No new account was created. Already-issued access tokens may remain valid until expiry.</p>${result.warning ? `<p role="alert" class="text-sm text-amber-200 mt-4">${esc(messageText(result.warning))}</p>` : ''}`);
         }
       }
     } catch (error) {
-      console.error('Supabase operation failed:',error.message);
+      console.error('Operation:',error.message);
       if (isAuth) {
-        authError = error.message || 'Unable to complete authentication.';
+        authError = error.message;
         if (form.id === 'auth-form' && !pending?.verified) { authFlow = false; if (authMode === 'signup') pending = null; }
         if (pending?.verified) { authStep = 'password'; render(); }
-        else {
-          const errorElement = document.createElement('div'); errorElement.setAttribute('role','alert'); errorElement.className = 'rounded-xl border border-red-400/30 bg-red-400/5 p-4 mb-5 text-sm text-red-200 whitespace-pre-wrap'; errorElement.textContent = authError;
-          form.parentElement.querySelector('[role="alert"]')?.remove(); form.before(errorElement);
-        }
-      } else if (isAdminCredentials && form.isConnected) {
-        const alert = form.querySelector('[role="alert"]');
-        alert.textContent = error.message || 'Unable to update administrator login.'; alert.classList.remove('hidden');
-        alert.scrollIntoView({block:'nearest'});
-      } else toast(error.message || 'Unable to complete the operation.');
+        else if (form.isConnected) {
+          form.parentElement.querySelector('[role="alert"]')?.remove();
+          const alert = document.createElement('div'); alert.setAttribute('role','alert'); alert.className = 'rounded-xl border border-red-400/30 bg-red-400/5 p-4 mb-5 text-sm text-red-200 whitespace-pre-wrap'; alert.textContent = messageText(authError); form.before(alert);
+        } else render();
+      } else if ((isCredentials || isAdvert) && form.isConnected) {
+        const alert = form.querySelector('[role="alert"]'); alert.textContent = messageText(error.message); alert.classList.remove('hidden'); alert.scrollIntoView({block:'nearest'});
+      } else toast(error.message);
     } finally {
-      if (isAdminCredentials) form.querySelectorAll('input[data-visibility-control]').forEach(field => { field.value = ''; field.type = 'password'; const control = field.parentElement.querySelector('[data-action="toggle-password"]'); if (control) { control.setAttribute('aria-pressed','false'); control.setAttribute('aria-label','Show password'); control.title = 'Show password'; control.innerHTML = icon('eye'); } });
-      if (form.id === 'verify-form' && authMode === 'admin-recovery') form.querySelectorAll('input[data-visibility-control]').forEach(field => { field.value = ''; field.type = 'password'; const control = field.parentElement.querySelector('[data-action="toggle-password"]'); if (control) { control.setAttribute('aria-pressed','false'); control.setAttribute('aria-label','Show password'); control.title = 'Show password'; control.innerHTML = icon('eye'); } });
+      if (isCredentials) clearCredentialFields(form);
       busy = false; form.removeAttribute('aria-busy'); if (button?.isConnected) { button.disabled = false; button.textContent = oldText; }
     }
   });
-  // Refresh real records; never calculate or write earnings from the browser.
+  // Public announcements and authenticated records refresh without any visible vendor/sync banner.
   const poll = setInterval(async () => {
-    if (document.hidden || busy || authFlow || !authUser || !state || $('modal').open) return;
+    if (document.hidden || busy || authFlow || $('modal').open || !installPopup.classList.contains('hidden')) return;
+    void loadAdverts();
+    if (!authUser || !state) return;
     await sync(true); if (page === 'referral' && me()?.role !== 'admin') await loadReferrals();
   },10000);
-  document.addEventListener('visibilitychange',() => { if (!document.hidden && authUser && !authFlow && !busy && !$('modal').open) void sync(true); });
-  if (broadcast) broadcast.onmessage = e => { if (e.data?.type === 'refresh' && authUser && !authFlow && !busy && !$('modal').open) void sync(true); };
-  window.addEventListener('pagehide',() => { clearInterval(poll); broadcast?.close(); });
+  document.addEventListener('visibilitychange',() => {
+    if (document.hidden || authFlow || busy || $('modal').open) return;
+    void loadAdverts(); if (authUser) void sync(true);
+  });
+  if (broadcast) broadcast.onmessage = e => {
+    if (e.data?.type !== 'refresh' || authFlow || busy || $('modal').open) return;
+    void loadAdverts(); if (authUser) void sync(true);
+  };
+  window.addEventListener('pagehide',e => { if (!e.persisted) { clearInterval(poll); broadcast?.close(); } });
   void initialize();
 });
 </script>
-<script>window.onload=function(){var d=document.createElement("div");d.id="appLoadFinished";document.body.appendChild(d);};</script>
+<script>window.addEventListener('load',function(){if(!document.getElementById('appLoadFinished')){var d=document.createElement('div');d.id='appLoadFinished';document.body.appendChild(d);}});</script>
 <script>window.onload=function(){var d=document.createElement("div");d.id="appLoadFinished";document.body.appendChild(d);};</script>
 </body>
-
 
 </html>
