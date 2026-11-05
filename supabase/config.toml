@@ -1,0 +1,7 @@
+project_id = "epdufkwactntickyyofl"
+
+# Password login must be reachable before a user has an authenticated JWT.
+# The Edge Function validates credentials with Supabase Auth before returning a session.
+# Administrator provisioning additionally requires an exact match to server-only secrets.
+[functions.account-access]
+verify_jwt = false
