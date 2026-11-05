@@ -38,7 +38,7 @@ document.addEventListener('DOMContentLoaded', () => {
   'use strict';
   // Only public Supabase connection details belong here. Private credentials are read by Edge Functions only.
   const URL_SUPABASE = 'https://epdufkwactntickyyofl.supabase.co';
-  const ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVwZHVma3dhY3RudGlja3l5b2ZsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM4MTI3NDMsImV4cCI6MjEwOTM4ODc0M30.gGStIB-VgpSOPgc-Q2mxVlk0cf5xK2wF8aCMhnAoY6k';
+  const PUBLIC_KEY = 'sb_publishable_xmjROXaDi7IY97etHGDR3g_YeTdQP4M';
   const $ = id => document.getElementById(id), day = 86400000;
   const input = 'w-full rounded-xl border border-line bg-ink px-4 py-3 text-sm outline-none text-slate-100';
   const primary = 'rounded-xl bg-gold px-5 py-3 text-sm font-bold text-ink hover:bg-amber-300';
@@ -332,7 +332,8 @@ document.addEventListener('DOMContentLoaded', () => {
   async function authSettings() {
     const controller = new AbortController(), timer = setTimeout(() => controller.abort(),15000);
     try {
-      const response = await fetch(`${URL_SUPABASE}/auth/v1/settings`,{headers:{apikey:ANON_KEY,Authorization:`Bearer ${ANON_KEY}`},signal:controller.signal});
+      // A publishable key belongs in apikey, not in a JWT Authorization header.
+      const response = await fetch(`${URL_SUPABASE}/auth/v1/settings`,{headers:{apikey:PUBLIC_KEY},signal:controller.signal});
       const data = await response.json();
       if (!response.ok) throw new Error(`Supabase Auth [HTTP ${response.status}]: ${data.msg || data.message || data.error_description || 'Connection failed.'}`);
       return data;
@@ -343,7 +344,7 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
       if (!sb) {
         if (!window.supabase?.createClient) throw new Error('The Supabase SDK could not load. Check your internet connection or CDN access and retry.');
-        sb = window.supabase.createClient(URL_SUPABASE,ANON_KEY,{auth:{flowType:'pkce',persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
+        sb = window.supabase.createClient(URL_SUPABASE,PUBLIC_KEY,{auth:{flowType:'pkce',persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
         sb.auth.onAuthStateChange((event,session) => {
           // Avoid awaiting database/Auth calls inside the Supabase auth callback.
           setTimeout(async () => {
