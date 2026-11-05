@@ -229,7 +229,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const rows = [...state.deposits.map(d => ({...d,kind:'Deposit'})),...state.withdrawals.map(w => ({...w,kind:`${w.type} withdrawal`}))].filter(r => r.status !== 'pending').sort((a,b) => new Date(b.processed_at) - new Date(a.processed_at)).filter(r => { const f = findUser(r.user_id); return matches(`${f.name} ${f.phone} ${r.kind} ${r.status}`); });
       return heading('Request history','Archived records; no processed requests appear on the main pending lists.') + searchBox('Search user names, request types, or statuses') + `<section class="${card} p-5">${rows.map(r => `<div class="border-b border-line last:border-0 py-4 flex flex-wrap justify-between gap-4"><div><p class="text-sm">${esc(findUser(r.user_id).name)} · ${esc(r.kind)}</p><p class="text-xs text-muted mt-1">${when(r.processed_at)} · ${r.network} · ${money(r.amount)}${r.net_amount != null ? ` · Net ${money(r.net_amount)}` : ''}</p></div><div class="flex items-center gap-3">${badge(r.status)}${banButton(findUser(r.user_id))}</div></div>`).join('') || empty('No matching archived requests.')}</section>`;
     }
-    if (page === 'settings') return heading('Deposit wallet settings','These addresses are loaded from and saved to Supabase.') + `<section class="${card} p-6 max-w-3xl"><p class="text-sm text-gold mb-5">Double-check the chain and ownership before changing a deposit address.</p><form id="wallet-form" data-draft="wallets" class="space-y-5">${['BSC','TRX'].map(n => `<label class="block text-sm">${n} / ${n === 'BSC' ? 'BEP20' : 'TRC20'} USDT address<input required name="${n}" value="${esc(state.wallets[n] || '')}" pattern="${n === 'BSC' ? '0x[a-fA-F0-9]{40}' : 'T[1-9A-HJ-NP-Za-km-z]{33}'}" class="${input} mt-2 font-mono"></label>`).join('')}<button class="${primary}">Save wallet addresses</button></form><div class="border-t border-line mt-6 pt-6 text-xs text-muted leading-relaxed">Roles, balances, financial approvals, and earnings are enforced server-side. Administrator access is verified against the existing protected account role on the server. Login never creates administrator accounts, changes credentials, or assigns roles.</div><div class="border-t border-line mt-6 pt-6"><h2 class="font-display font-semibold text-sm">Email verification code delivery</h2><p class="text-xs text-muted leading-relaxed mt-3">In Supabase Dashboard → Authentication → Email Templates, include <code class="text-gold">${esc('{{ .Token }}')}</code> in the Magic Link, Confirm Signup, and Reset Password templates instead of a confirmation-link-only message. The website sends and validates real Supabase email codes; saving wallet settings does not change email templates.</p><p class="text-xs text-muted leading-relaxed mt-3">For international delivery, configure production SMTP in Supabase and enable the Email provider. Without custom SMTP, Supabase's built-in email service may restrict recipients and sending rates.</p><a href="https://supabase.com/docs/guides/auth/auth-email-passwordless" target="_blank" rel="noopener noreferrer" class="inline-block text-xs text-gold hover:underline mt-3">Email OTP setup guide ${icon('arrow-up-right-from-square','ml-1')}</a></div></section>`;
+    if (page === 'settings') return heading('Deposit wallet settings','These addresses are loaded from and saved to Supabase.') + `<section class="${card} p-6 max-w-3xl"><p class="text-sm text-gold mb-5">Double-check the chain and ownership before changing a deposit address.</p><form id="wallet-form" data-draft="wallets" class="space-y-5">${['BSC','TRX'].map(n => `<label class="block text-sm">${n} / ${n === 'BSC' ? 'BEP20' : 'TRC20'} USDT address<input required name="${n}" value="${esc(state.wallets[n] || '')}" pattern="${n === 'BSC' ? '0x[a-fA-F0-9]{40}' : 'T[1-9A-HJ-NP-Za-km-z]{33}'}" class="${input} mt-2 font-mono"></label>`).join('')}<button class="${primary}">Save wallet addresses</button></form><div class="border-t border-line mt-6 pt-6 text-xs text-muted leading-relaxed">Roles, balances, financial approvals, and earnings are enforced server-side. Administrator access is verified against the existing protected account role on the server. Login never creates administrator accounts, changes credentials, or assigns roles.</div><div class="border-t border-line mt-6 pt-6"><h2 class="font-display font-semibold text-sm">Email verification code delivery</h2><p class="text-xs text-muted leading-relaxed mt-3">In Supabase Dashboard → Authentication → Email Templates, include <code class="text-gold">${esc('{{ .Token }}')}</code> in the Magic Link, Confirm Signup, and Reset Password templates instead of a confirmation-link-only message. The website sends and validates real Supabase email codes; saving wallet settings does not change email templates.</p><p class="text-xs text-muted leading-relaxed mt-3">For international delivery, configure production SMTP in Supabase and enable the Email provider. Without custom SMTP, Supabase's built-in email service may restrict recipients and sending rates.</p><a href="https://supabase.com/docs/guides/auth/auth-email-passwordless" target="_blank" rel="noopener noreferrer" class="inline-block text-xs text-gold hover:underline mt-3">Email OTP setup guide ${icon('arrow-up-right-from-square','ml-1')}</a></div><div class="border-t border-line mt-6 pt-6"><h2 class="font-display font-semibold text-lg">Change administrator login</h2><p class="text-sm text-muted leading-relaxed mt-3">Update your existing administrator account only. Your role, phone number, balances, and history stay unchanged. Enter passwords here, not in chat.</p><form id="admin-login-form" class="space-y-4 mt-5"><p id="admin-login-error" role="alert" class="hidden rounded-xl border border-red-400/30 bg-red-400/5 p-4 text-sm text-red-200 whitespace-pre-wrap"></p><label class="block text-sm">Current password<input required type="password" name="current_password" maxlength="1024" autocomplete="current-password" class="${input} mt-2" placeholder="Confirm your current administrator password"></label><label class="block text-sm">New administrator email<input required type="email" name="email" maxlength="254" autocomplete="email" value="${esc(authUser.email || '')}" class="${input} mt-2" placeholder="Your new administrator email"></label><label class="block text-sm">New password<input required type="password" name="new_password" minlength="8" maxlength="1024" autocomplete="new-password" class="${input} mt-2" placeholder="At least 8 characters"></label><label class="block text-sm">Confirm new password<input required type="password" name="confirm_password" minlength="8" maxlength="1024" autocomplete="new-password" class="${input} mt-2" placeholder="Repeat your new password"></label><p class="text-xs text-muted leading-relaxed">Your current password and administrator permissions are verified on the server. The password changes immediately after a successful save. An email change requires Supabase confirmation; follow the instructions sent to your current and new inboxes. Until confirmed, sign in with your current email and new password.</p><button type="submit" class="${primary} w-full sm:w-auto">Update administrator login ${icon('shield-halved','ml-2')}</button></form></div></section>`;
     return adminHome();
   }
 
@@ -504,6 +504,8 @@ document.addEventListener('DOMContentLoaded', () => {
     busy = true; const oldText = button?.textContent;
     if (button) { button.disabled = true; button.textContent = 'Please wait…'; } form.setAttribute('aria-busy','true');
     const isAuth = ['auth-form','verify-form','recovery-form'].includes(form.id);
+    const isAdminCredentials = form.id === 'admin-login-form';
+    if (isAdminCredentials) form.querySelector('[role="alert"]')?.classList.add('hidden');
     try {
       if (!sb || !connected) throw new Error('Supabase is not connected. Retry the connection; no offline authentication is available.');
       if (form.id === 'auth-form') {
@@ -570,6 +572,42 @@ document.addEventListener('DOMContentLoaded', () => {
           const {data,error} = await sb.from('profiles').update({full_name:name,country:fd.get('country')}).eq('id',u.id).select('id'); if (error) throw error;
           if (!data?.length) throw new Error('Your profile was not updated. Check account permissions.');
           drafts.delete(form.dataset.draft); await afterWrite('Your profile was saved to Supabase.');
+        } else if (form.id === 'admin-login-form') {
+          if (u.role !== 'admin') throw new Error('Administrator access required.');
+          const email = String(fd.get('email')).trim().toLowerCase();
+          const currentPassword = String(fd.get('current_password')), newPassword = String(fd.get('new_password'));
+          if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 254) throw new Error('Enter a valid new email address.');
+          if (newPassword.length < 8 || newPassword.length > 1024) throw new Error('Your new password must contain between 8 and 1,024 characters.');
+          if (newPassword !== String(fd.get('confirm_password'))) throw new Error('The new passwords do not match.');
+          if (newPassword === currentPassword) throw new Error('Choose a password different from your current password.');
+          // Never store credentials in drafts, browser storage, or client logs.
+          authFlow = true;
+          let result;
+          try {
+            result = await edge('account-access',{action:'change-admin-login',email,current_password:currentPassword,new_password:newPassword});
+            if (result.user_id !== u.id || result.role !== 'admin' || result.password_updated !== true) throw new Error('Supabase did not confirm the administrator update. Sign in again to check your account.');
+            if (result.access_token && result.refresh_token) {
+              const {data,error} = await sb.auth.setSession({access_token:result.access_token,refresh_token:result.refresh_token});
+              if (error || !data.session) {
+                throw new Error('Your password was updated, but the browser session could not refresh. Sign out and use your new password. Check both inboxes if you requested an email change.');
+              }
+              authFlow = false;
+              await activate(data.session);
+            } else {
+              const {error} = await sb.auth.signOut({scope:'local'});
+              if (error) throw new Error('Your password was updated. Sign in again with your new password; check both inboxes for any email change confirmation.');
+              await resetAuthMode('login');
+            }
+          } finally {
+            authFlow = false;
+            form.querySelectorAll('input[type="password"]').forEach(field => { field.value = ''; });
+          }
+          const instructions = result.email_confirmation_pending
+            ? 'Your new password is saved. Follow the email-change confirmation instructions sent by Supabase to your current and new email addresses. Until confirmation is complete, use your current email with the new password. Email-change templates are separate from signup templates.'
+            : result.email_change_requested
+              ? 'Your new password is saved and Supabase reports your new email on the existing account. Use your new login details for future sign-ins.'
+              : 'Your new password is saved. Your administrator email is unchanged.';
+          modal('Administrator login updated',`<div class="flex gap-3 items-start text-sm leading-relaxed">${icon('shield-halved','text-gold mt-1')}<p>${esc(instructions)}</p></div><p class="text-xs text-muted leading-relaxed mt-4">Your existing account and Admin Dashboard access are preserved. No account was created and no role, phone number, balance, or history was changed. Other refresh sessions are signed out when possible; already-issued access tokens remain valid until expiry.</p>${result.warning ? `<p role="alert" class="text-sm text-amber-200 mt-4">${esc(result.warning)}</p>` : ''}`);
         } else if (form.id === 'wallet-form') {
           if (u.role !== 'admin') throw new Error('Administrator access required.');
           const bsc = String(fd.get('BSC')).trim(), trx = String(fd.get('TRX')).trim();
@@ -602,8 +640,13 @@ document.addEventListener('DOMContentLoaded', () => {
           const errorElement = document.createElement('div'); errorElement.setAttribute('role','alert'); errorElement.className = 'rounded-xl border border-red-400/30 bg-red-400/5 p-4 mb-5 text-sm text-red-200 whitespace-pre-wrap'; errorElement.textContent = authError;
           form.parentElement.querySelector('[role="alert"]')?.remove(); form.before(errorElement);
         }
+      } else if (isAdminCredentials && form.isConnected) {
+        const alert = form.querySelector('[role="alert"]');
+        alert.textContent = error.message || 'Unable to update administrator login.'; alert.classList.remove('hidden');
+        alert.scrollIntoView({block:'nearest'});
       } else toast(error.message || 'Unable to complete the operation.');
     } finally {
+      if (isAdminCredentials) form.querySelectorAll('input[type="password"]').forEach(field => { field.value = ''; });
       busy = false; form.removeAttribute('aria-busy'); if (button?.isConnected) { button.disabled = false; button.textContent = oldText; }
     }
   });

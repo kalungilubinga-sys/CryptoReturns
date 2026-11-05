@@ -3,6 +3,8 @@ project_id = "epdufkwactntickyyofl"
 # Login and validated email-code signup are reachable before authentication.
 # The session action explicitly validates the JWT with Supabase Auth and checks
 # the existing protected profile role before any dashboard access is granted.
-# Account access never provisions administrators or changes credentials or roles.
+# Login/signup never provision administrators or change credentials or roles.
+# Explicit administrator credential updates verify the JWT, protected admin role,
+# and current password before performing a user-scoped Supabase Auth update.
 [functions.account-access]
 verify_jwt = false

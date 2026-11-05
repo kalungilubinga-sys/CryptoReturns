@@ -2,7 +2,8 @@ import { createClient, type SupabaseClient } from 'https://esm.sh/@supabase/supa
 import { corsHeaders, jsonResponse } from '../_shared/cors.ts';
 
 // Existing Supabase credentials and protected profile roles are authoritative.
-// This function NEVER provisions administrators, changes passwords, or assigns roles.
+// Login and signup NEVER provision administrators, change passwords, or assign roles.
+// Explicit credential changes require a verified administrator session and current password.
 const normalizePhone = (value: string) => value.trim().replace(/[\s()\-]/g, '');
 const validEmail = (value: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value) && value.length <= 254;
 const validPhone = (value: string) => /^\+[1-9]\d{6,14}$/.test(value);
@@ -172,6 +173,79 @@ async function requestSignupCode(admin: SupabaseClient, auth: SupabaseClient, bo
   return { sent: true };
 }
 
+async function changeAdministratorLogin(admin: SupabaseClient, auth: SupabaseClient, token: string, body: Record<string, unknown>) {
+  const access = await verifiedAccess(admin, token);
+  if (access.role !== 'admin') throw new AccessError('Administrator access required.', 403, 'ADMIN_REQUIRED');
+  if (typeof body.current_password !== 'string' || typeof body.new_password !== 'string' || typeof body.email !== 'string') {
+    throw new AccessError('Enter your current password, new email address, and new password.');
+  }
+  const email = body.email.trim().toLowerCase();
+  if (!validEmail(email)) throw new AccessError('Enter a valid new email address.');
+  if (!body.current_password || body.current_password.length > 1024) throw new AccessError('Enter your current password.');
+  if (body.new_password.length < 8 || body.new_password.length > 1024) throw new AccessError('Your new password must contain between 8 and 1,024 characters.');
+  if (body.current_password === body.new_password) throw new AccessError('Choose a new password different from your current password.');
+
+  const { data: current, error: currentError } = await admin.auth.getUser(token);
+  if (currentError || !current.user || current.user.id !== access.user_id) {
+    throw new AccessError('Your session expired. Sign in again.', 401, 'SESSION_EXPIRED');
+  }
+  const currentEmail = current.user.email;
+  if (!currentEmail) throw new AccessError('This administrator account has no email login. Contact the project owner; no credentials were changed.', 409, 'EMAIL_LOGIN_REQUIRED');
+
+  // Use Supabase Auth to reauthenticate the SAME account. Stored secrets and
+  // client-supplied roles are never accepted as proof of administrator access.
+  const { data: reauthenticated, error: reauthError } = await auth.auth.signInWithPassword({
+    email: currentEmail, password: body.current_password,
+  });
+  if (reauthError || !reauthenticated.session || !reauthenticated.user) {
+    throw new AccessError(reauthError?.status === 429 ? 'Too many attempts. Wait before retrying.' : 'Your current password could not be verified. No credentials were changed.', reauthError?.status === 429 ? 429 : 403, 'REAUTHENTICATION_FAILED');
+  }
+  try {
+    if (reauthenticated.user.id !== access.user_id) throw new AccessError('Account verification failed. No credentials were changed.', 403);
+    const checked = await verifiedAccess(admin, reauthenticated.session.access_token);
+    if (checked.role !== 'admin' || checked.user_id !== access.user_id) throw new AccessError('Administrator permissions could not be verified. No credentials were changed.', 403);
+    const emailChanged = email !== currentEmail.toLowerCase();
+    if (emailChanged) {
+      const owners = await lookup(admin, email);
+      if (owners.some(owner => owner.user_id !== access.user_id)) {
+        throw new AccessError('This email address already belongs to another account. Use a different email address; accounts cannot be merged.', 409, 'EMAIL_ALREADY_REGISTERED');
+      }
+    }
+
+    // A user-scoped Auth update preserves the existing UUID, profile, role,
+    // phone ownership and financial records. NEVER bypass email confirmation.
+    // Supabase's configured email-change confirmation rules remain authoritative.
+    const { data: updated, error: updateError } = await auth.auth.updateUser({
+      password: body.new_password,
+      ...(emailChanged ? { email } : {}),
+    });
+    if (updateError) throw new AccessError(updateError.message, updateError.status === 429 ? 429 : 400, updateError.code || 'CREDENTIAL_UPDATE_FAILED');
+    if (!updated.user || updated.user.id !== access.user_id) {
+      throw new AccessError('Supabase did not confirm the update. Check your email and sign in again before retrying.', 503, 'UPDATE_UNCONFIRMED');
+    }
+    // Retire other refresh sessions after the change. Already-issued JWTs may
+    // remain valid until expiry; this is not represented as instant revocation.
+    let warning = '';
+    const { error: signOutError } = await auth.auth.signOut({ scope: 'others' });
+    if (signOutError) warning = 'Other sessions could not be signed out. Review active sessions in Supabase.';
+    const { data: sessionData, error: sessionError } = await auth.auth.getSession();
+    const session = sessionData.session;
+    return {
+      user_id: access.user_id,
+      role: 'admin',
+      password_updated: true,
+      email_confirmation_pending: emailChanged && updated.user.email?.toLowerCase() !== email,
+      email_change_requested: emailChanged,
+      warning,
+      // Session transfer avoids relying on an obsolete browser refresh token.
+      ...(sessionError || !session ? {} : { access_token: session.access_token, refresh_token: session.refresh_token }),
+    };
+  } catch (error) {
+    await clearSession(auth);
+    throw error;
+  }
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
   if (req.method !== 'POST') return jsonResponse({ error: 'Method not allowed.' }, 405);
@@ -190,6 +264,11 @@ Deno.serve(async (req: Request) => {
       return jsonResponse(await verifiedAccess(admin, token));
     }
     const auth = createClient(url, anonKey, { auth: { persistSession: false, autoRefreshToken: false } });
+    if (action === 'change-admin-login') {
+      const token = req.headers.get('Authorization')?.replace(/^Bearer\s+/i, '').trim();
+      if (!token) throw new AccessError('Sign in as an administrator to change your login details.', 401, 'SESSION_EXPIRED');
+      return jsonResponse(await changeAdministratorLogin(admin, auth, token, body));
+    }
     if (action === 'signup') return jsonResponse(await requestSignupCode(admin, auth, body));
     if (action === 'login') return jsonResponse(await login(admin, auth, body));
     throw new AccessError('Unsupported account action.');
