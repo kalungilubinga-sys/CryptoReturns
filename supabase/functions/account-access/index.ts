@@ -3,7 +3,8 @@ import { corsHeaders, jsonResponse } from '../_shared/cors.ts';
 
 // Existing Supabase credentials and protected profile roles are authoritative.
 // Login and signup NEVER provision administrators, change passwords, or assign roles.
-// Explicit credential changes require a verified administrator session and current password.
+// Credential changes require a verified administrator role and either the current
+// password or a fresh Supabase recovery code delivered to the existing email.
 const normalizePhone = (value: string) => value.trim().replace(/[\s()\-]/g, '');
 const validEmail = (value: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value) && value.length <= 254;
 const validPhone = (value: string) => /^\+[1-9]\d{6,14}$/.test(value);
@@ -173,6 +174,45 @@ async function requestSignupCode(admin: SupabaseClient, auth: SupabaseClient, bo
   return { sent: true };
 }
 
+// Called only after password reauthentication or a fresh recovery-code check.
+// Both paths use the same user-scoped update and preserve email confirmation.
+async function updateAdministratorCredentials(
+  admin: SupabaseClient, auth: SupabaseClient, userId: string,
+  currentEmail: string, email: string, password: string,
+) {
+  const emailChanged = email !== currentEmail.toLowerCase();
+  if (emailChanged) {
+    const owners = await lookup(admin, email);
+    if (owners.some(owner => owner.user_id !== userId)) {
+      throw new AccessError('This email address already belongs to another account. Use a different email address; accounts cannot be merged.', 409, 'EMAIL_ALREADY_REGISTERED');
+    }
+  }
+  // Never use the service-role Auth API to overwrite credentials or confirm email.
+  // The existing UUID, protected role, phone ownership and financial records remain.
+  const { data: updated, error: updateError } = await auth.auth.updateUser({
+    password, ...(emailChanged ? { email } : {}),
+  });
+  if (updateError) throw new AccessError(updateError.message, updateError.status === 429 ? 429 : 400, updateError.code || 'CREDENTIAL_UPDATE_FAILED');
+  if (!updated.user || updated.user.id !== userId) {
+    throw new AccessError('Supabase did not confirm the update. Check your email and sign in again before retrying.', 503, 'UPDATE_UNCONFIRMED');
+  }
+  let warning = '';
+  const { error: signOutError } = await auth.auth.signOut({ scope: 'others' });
+  if (signOutError) warning = 'Other sessions could not be signed out. Review active sessions in Supabase.';
+  const { data: sessionData, error: sessionError } = await auth.auth.getSession();
+  const session = sessionData.session;
+  return {
+    user_id: userId,
+    role: 'admin',
+    password_updated: true,
+    email_confirmation_pending: emailChanged && updated.user.email?.toLowerCase() !== email,
+    email_change_requested: emailChanged,
+    warning,
+    // Already-issued access tokens may remain valid until their expiry.
+    ...(sessionError || !session ? {} : { access_token: session.access_token, refresh_token: session.refresh_token }),
+  };
+}
+
 async function changeAdministratorLogin(admin: SupabaseClient, auth: SupabaseClient, token: string, body: Record<string, unknown>) {
   const access = await verifiedAccess(admin, token);
   if (access.role !== 'admin') throw new AccessError('Administrator access required.', 403, 'ADMIN_REQUIRED');
@@ -191,9 +231,6 @@ async function changeAdministratorLogin(admin: SupabaseClient, auth: SupabaseCli
   }
   const currentEmail = current.user.email;
   if (!currentEmail) throw new AccessError('This administrator account has no email login. Contact the project owner; no credentials were changed.', 409, 'EMAIL_LOGIN_REQUIRED');
-
-  // Use Supabase Auth to reauthenticate the SAME account. Stored secrets and
-  // client-supplied roles are never accepted as proof of administrator access.
   const { data: reauthenticated, error: reauthError } = await auth.auth.signInWithPassword({
     email: currentEmail, password: body.current_password,
   });
@@ -204,44 +241,44 @@ async function changeAdministratorLogin(admin: SupabaseClient, auth: SupabaseCli
     if (reauthenticated.user.id !== access.user_id) throw new AccessError('Account verification failed. No credentials were changed.', 403);
     const checked = await verifiedAccess(admin, reauthenticated.session.access_token);
     if (checked.role !== 'admin' || checked.user_id !== access.user_id) throw new AccessError('Administrator permissions could not be verified. No credentials were changed.', 403);
-    const emailChanged = email !== currentEmail.toLowerCase();
-    if (emailChanged) {
-      const owners = await lookup(admin, email);
-      if (owners.some(owner => owner.user_id !== access.user_id)) {
-        throw new AccessError('This email address already belongs to another account. Use a different email address; accounts cannot be merged.', 409, 'EMAIL_ALREADY_REGISTERED');
-      }
-    }
-
-    // A user-scoped Auth update preserves the existing UUID, profile, role,
-    // phone ownership and financial records. NEVER bypass email confirmation.
-    // Supabase's configured email-change confirmation rules remain authoritative.
-    const { data: updated, error: updateError } = await auth.auth.updateUser({
-      password: body.new_password,
-      ...(emailChanged ? { email } : {}),
-    });
-    if (updateError) throw new AccessError(updateError.message, updateError.status === 429 ? 429 : 400, updateError.code || 'CREDENTIAL_UPDATE_FAILED');
-    if (!updated.user || updated.user.id !== access.user_id) {
-      throw new AccessError('Supabase did not confirm the update. Check your email and sign in again before retrying.', 503, 'UPDATE_UNCONFIRMED');
-    }
-    // Retire other refresh sessions after the change. Already-issued JWTs may
-    // remain valid until expiry; this is not represented as instant revocation.
-    let warning = '';
-    const { error: signOutError } = await auth.auth.signOut({ scope: 'others' });
-    if (signOutError) warning = 'Other sessions could not be signed out. Review active sessions in Supabase.';
-    const { data: sessionData, error: sessionError } = await auth.auth.getSession();
-    const session = sessionData.session;
-    return {
-      user_id: access.user_id,
-      role: 'admin',
-      password_updated: true,
-      email_confirmation_pending: emailChanged && updated.user.email?.toLowerCase() !== email,
-      email_change_requested: emailChanged,
-      warning,
-      // Session transfer avoids relying on an obsolete browser refresh token.
-      ...(sessionError || !session ? {} : { access_token: session.access_token, refresh_token: session.refresh_token }),
-    };
+    return await updateAdministratorCredentials(admin, auth, access.user_id, currentEmail, email, body.new_password);
   } catch (error) {
     await clearSession(auth);
+    throw error;
+  }
+}
+
+async function recoverAdministratorLogin(admin: SupabaseClient, auth: SupabaseClient, body: Record<string, unknown>) {
+  if (typeof body.current_email !== 'string' || typeof body.code !== 'string' || typeof body.email !== 'string' || typeof body.new_password !== 'string') {
+    throw new AccessError('Enter your previous email, its recovery code, your new email, and a new password.');
+  }
+  const currentEmail = body.current_email.trim().toLowerCase();
+  const email = body.email.trim().toLowerCase(), code = body.code.trim();
+  if (!validEmail(currentEmail) || !validEmail(email)) throw new AccessError('Enter valid previous and new email addresses.');
+  if (!/^\d{4,10}$/.test(code)) throw new AccessError('Enter the numeric recovery code from your previous email inbox.');
+  if (body.new_password.length < 8 || body.new_password.length > 1024) throw new AccessError('Your new password must contain between 8 and 1,024 characters.');
+
+  // Knowing an email, a generic login session, or configured secrets is NOT proof.
+  // Only a fresh Supabase recovery code sent to the existing email is accepted.
+  const { data: recovered, error: recoveryError } = await auth.auth.verifyOtp({
+    email: currentEmail, token: code, type: 'recovery',
+  });
+  if (recoveryError || !recovered.user || !recovered.session) {
+    throw new AccessError(recoveryError?.status === 429 ? 'Too many attempts. Wait before requesting another recovery code.' : 'This recovery code is incorrect, expired, or already used. Request a new code and use the latest email.', recoveryError?.status === 429 ? 429 : 400, 'RECOVERY_CODE_INVALID');
+  }
+  try {
+    if (recovered.user.email?.toLowerCase() !== currentEmail) throw new AccessError('Recovery account verification failed. No login details were changed.', 403, 'RECOVERY_ACCOUNT_MISMATCH');
+    const checked = await verifiedAccess(admin, recovered.session.access_token);
+    if (checked.role !== 'admin' || checked.user_id !== recovered.user.id) {
+      throw new AccessError('This recovery flow is for an existing administrator only. Use Forgot password for a normal user account. No login details were changed.', 403, 'ADMIN_REQUIRED');
+    }
+    return await updateAdministratorCredentials(admin, auth, checked.user_id, currentEmail, email, body.new_password);
+  } catch (error) {
+    await clearSession(auth);
+    // A successfully verified code is single-use, even if the subsequent update fails.
+    if (error instanceof AccessError && error.code !== 'UPDATE_UNCONFIRMED') {
+      throw new AccessError(`${error.message} Request a new recovery code before retrying.`, error.status, error.code);
+    }
     throw error;
   }
 }
@@ -269,6 +306,7 @@ Deno.serve(async (req: Request) => {
       if (!token) throw new AccessError('Sign in as an administrator to change your login details.', 401, 'SESSION_EXPIRED');
       return jsonResponse(await changeAdministratorLogin(admin, auth, token, body));
     }
+    if (action === 'recover-admin-login') return jsonResponse(await recoverAdministratorLogin(admin, auth, body));
     if (action === 'signup') return jsonResponse(await requestSignupCode(admin, auth, body));
     if (action === 'login') return jsonResponse(await login(admin, auth, body));
     throw new AccessError('Unsupported account action.');

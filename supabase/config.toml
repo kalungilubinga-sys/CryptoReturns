@@ -4,7 +4,10 @@ project_id = "epdufkwactntickyyofl"
 # The session action explicitly validates the JWT with Supabase Auth and checks
 # the existing protected profile role before any dashboard access is granted.
 # Login/signup never provision administrators or change credentials or roles.
-# Explicit administrator credential updates verify the JWT, protected admin role,
-# and current password before performing a user-scoped Supabase Auth update.
+# Signed-in credential changes verify the JWT, protected admin role and current
+# password. Forgotten-login recovery verifies a fresh Supabase recovery OTP sent
+# to the existing email AND the protected admin role before any credential update.
+# Neither path creates accounts, changes roles or bypasses email confirmation.
+# Recovery must be callable without a login JWT; Supabase verifies the OTP server-side.
 [functions.account-access]
 verify_jwt = false
