@@ -259,15 +259,16 @@ document.addEventListener('DOMContentLoaded', () => {
   }
   function movingAdvertHomeContent() {
     if (!movingAdvert) return movingAdvertError ? `<div role="alert" class="${card} mb-6 flex flex-wrap items-center justify-between gap-3 p-4 text-sm text-muted"><span>${esc(movingAdvertError)}</span><button type="button" data-action="retry-moving-advert" class="text-gold min-h-11 px-3">Retry moving advert</button></div>` : '';
-    const image = secureUrl(movingAdvert.image_url), link = secureUrl(movingAdvert.link_url);
-    return `<section aria-label="Moving announcement" class="${card} mb-7 overflow-hidden border-gold/30"><div class="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b border-line px-5 py-3 sm:px-6"><h2 class="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-gold">${icon('bullhorn')}Latest moving advert</h2><div class="flex flex-wrap items-center gap-3"><span data-moving-status role="status" aria-live="polite" class="text-xs text-muted">Two slow passes, then stationary</span><button type="button" data-action="toggle-moving-advert" data-moving-control class="inline-flex min-h-11 items-center gap-2 rounded-lg border border-line px-3 py-2 text-xs font-semibold hover:bg-white/5" aria-label="Pause scrolling announcement">${icon('pause')}Pause</button></div></div><div class="flex items-start gap-4 px-5 sm:px-6">${image ? `<img data-advert-image src="${esc(image)}" alt="Image accompanying the moving announcement: ${esc(movingAdvert.title)}" loading="lazy" decoding="async" width="96" height="96" class="my-4 h-16 w-16 shrink-0 rounded-lg bg-ink object-contain sm:h-24 sm:w-24">` : ''}<div data-moving-lane class="min-w-0 flex-1 overflow-hidden"><div data-moving-accessible class="sr-only">${movingDetails(movingAdvert)}</div><div data-moving-track aria-hidden="true" class="inline-flex w-max max-w-none items-baseline gap-6 whitespace-nowrap py-4 will-change-transform">${movingDetails(movingAdvert,true)}</div></div></div>${link ? `<div class="px-5 pb-4 sm:px-6"><a href="${esc(link)}" target="_blank" rel="noopener noreferrer" class="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-gold hover:underline">Learn more ${icon('arrow-up-right-from-square','text-xs')}</a></div>` : ''}</section>`;
+    const image = secureUrl(movingAdvert.image_url), link = secureUrl(movingAdvert.link_url), admin = me()?.role === 'admin';
+    // Visitors and users see advert content only; verified administrators see playback controls.
+    return `<section aria-label="Announcement" class="${card} mb-7 overflow-hidden border-gold/30">${admin ? `<div class="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b border-line px-5 py-3 sm:px-6"><h2 class="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-gold">${icon('bullhorn')}Latest moving advert</h2><div class="flex flex-wrap items-center gap-3"><span data-moving-status role="status" aria-live="polite" class="text-xs text-muted">Two slow passes, then stationary</span><button type="button" data-action="toggle-moving-advert" data-moving-control class="inline-flex min-h-11 items-center gap-2 rounded-lg border border-line px-3 py-2 text-xs font-semibold hover:bg-white/5" aria-label="Pause scrolling announcement">${icon('pause')}Pause</button></div></div>` : ''}<div class="flex items-start gap-4 px-5 sm:px-6">${image ? `<img data-advert-image src="${esc(image)}" alt="Image accompanying the moving announcement: ${esc(movingAdvert.title)}" loading="lazy" decoding="async" width="96" height="96" class="my-4 h-16 w-16 shrink-0 rounded-lg bg-ink object-contain sm:h-24 sm:w-24">` : ''}<div data-moving-lane class="min-w-0 flex-1 overflow-hidden"><div data-moving-accessible class="sr-only">${movingDetails(movingAdvert)}</div><div data-moving-track aria-hidden="true" class="inline-flex w-max max-w-none items-baseline gap-6 whitespace-nowrap py-4 will-change-transform">${movingDetails(movingAdvert,true)}</div></div></div>${link ? `<div class="px-5 pb-4 sm:px-6"><a href="${esc(link)}" target="_blank" rel="noopener noreferrer" class="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-gold hover:underline">Learn more ${icon('arrow-up-right-from-square','text-xs')}</a></div>` : ''}</section>`;
   }
   function movingAdvertBanner() { return `<div data-moving-advert-home>${movingAdvertHomeContent()}</div>`; }
   function staticMovingPlayback(session) {
     session.track.className = 'w-full py-4'; session.track.removeAttribute('aria-hidden');
     session.track.innerHTML = movingDetails(session.advert); session.accessible.classList.add('hidden');
-    session.control.classList.add('hidden');
-    session.status.textContent = session.progress.reason === 'complete' ? 'Stopped after 2 passes' : session.progress.reason === 'reduced-motion' ? 'Stationary · reduced motion' : 'Stationary announcement';
+    session.control?.classList.add('hidden');
+    if (session.status) session.status.textContent = session.progress.reason === 'complete' ? 'Stopped after 2 passes' : session.progress.reason === 'reduced-motion' ? 'Stationary · reduced motion' : 'Stationary announcement';
   }
   function finishMovingPlayback(session,reason='complete') {
     if (movingPlayback !== session) return;
@@ -283,11 +284,13 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!session.animation) return;
     const paused = session.progress.paused || session.hovered || document.hidden || !installPopup.classList.contains('hidden');
     if (paused) session.animation.pause(); else if (session.animation.playState !== 'running') session.animation.play();
-    session.control.innerHTML = icon(session.progress.paused ? 'play' : 'pause') + (session.progress.paused ? 'Resume' : 'Pause');
-    session.control.setAttribute('aria-label',session.progress.paused ? 'Resume scrolling announcement' : 'Pause scrolling announcement');
+    if (session.control) {
+      session.control.innerHTML = icon(session.progress.paused ? 'play' : 'pause') + (session.progress.paused ? 'Resume' : 'Pause');
+      session.control.setAttribute('aria-label',session.progress.paused ? 'Resume scrolling announcement' : 'Pause scrolling announcement');
+    }
     const pass = Math.min(2,Math.floor((Number(session.animation.currentTime)||0)/session.progress.duration)+1);
     const label = paused ? 'Paused · scroll stops after 2 passes' : `Pass ${pass} of 2 · slow scroll`;
-    if (session.status.textContent !== label) session.status.textContent = label;
+    if (session.status && session.status.textContent !== label) session.status.textContent = label;
   }
   function mountMovingAdvert() {
     stopMovingPlayback();
@@ -295,6 +298,10 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!movingAdvert || !host?.querySelector('[data-moving-track]')) return;
     const session = {advert:movingAdvert,progress:movingProgress(movingAdvert.id),track:host.querySelector('[data-moving-track]'),lane:host.querySelector('[data-moving-lane]'),accessible:host.querySelector('[data-moving-accessible]'),control:host.querySelector('[data-moving-control]'),status:host.querySelector('[data-moving-status]'),animation:null,timer:null,hovered:false,cleanup:null};
     movingPlayback = session;
+    // A previously saved manual pause must not strand a viewer without a resume control.
+    if (me()?.role !== 'admin' && session.progress.paused) {
+      session.progress.paused = false; saveMovingProgress(session.progress);
+    }
     if (session.progress.done) { staticMovingPlayback(session); return; }
     if (reducedMovingMotion.matches) { finishMovingPlayback(session,'reduced-motion'); return; }
     if (typeof session.track.animate !== 'function') { finishMovingPlayback(session,'unavailable'); return; }
@@ -705,7 +712,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (action === 'retry-adverts') { await loadAdverts(); return; }
       if (action === 'retry-moving-advert') { await loadMovingAdvert(); return; }
       if (action === 'toggle-moving-advert') {
-        if (!movingPlayback || movingPlayback.progress.done) return;
+        if (me()?.role !== 'admin' || !movingPlayback || movingPlayback.progress.done) return;
         movingPlayback.progress.paused = !movingPlayback.progress.paused;
         updateMovingPlayback(); captureMovingProgress(); return;
       }
@@ -962,7 +969,9 @@ document.addEventListener('DOMContentLoaded', () => {
 <script>window.onload=function(){var d=document.createElement("div");d.id="appLoadFinished";document.body.appendChild(d);};</script>
 <script>window.onload=function(){var d=document.createElement("div");d.id="appLoadFinished";document.body.appendChild(d);};</script>
 <script>window.onload=function(){var d=document.createElement("div");d.id="appLoadFinished";document.body.appendChild(d);};</script>
+<script>window.onload=function(){var d=document.createElement("div");d.id="appLoadFinished";document.body.appendChild(d);};</script>
 </body>
+
 
 
 
