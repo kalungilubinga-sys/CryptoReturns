@@ -74,6 +74,8 @@ document.addEventListener('DOMContentLoaded', () => {
   let page = 'home', authMode = query.has('ref') ? 'signup' : 'login', authStep = 'details', pending = null, authError = '', authFlow = false;
   let search = '', depositAmount = 100, network = 'BSC', ack = false, withdrawType = 'daily', busy = false, epoch = 0, syncJob = null, needsRender = false;
   let advertisements = [], advertError = '', advertJob = null;
+  let movingAdvert = null, movingAdvertError = '', movingAdvertJob = null, movingAdvertRevision = 0, movingPlayback = null;
+  const movingProgressCache = new Map(), movingStorageKey = 'crMovingAdvertPlaybackV1';
   const advertColumns = 'id,title,message,image_url,link_url,created_at';
   const drafts = new Map();
   let broadcast;
@@ -100,6 +102,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (installPopup.classList.contains('hidden')) return;
     installPopup.classList.add('hidden'); installPopup.setAttribute('aria-hidden','true');
     $('app').inert = false; document.body.style.overflow = oldOverflow;
+    updateMovingPlayback();
     if (previousFocus?.isConnected && previousFocus !== document.body) previousFocus.focus();
     else $('app').querySelector('a,button,input')?.focus();
   }
@@ -216,6 +219,136 @@ document.addEventListener('DOMContentLoaded', () => {
     return heading('Send Advert','Publish a title, message, and optional image or link to every visitor and user.') + `<section class="${card} p-6 sm:p-8 max-w-3xl"><div class="flex gap-3 items-start mb-6"><span class="grid w-11 h-11 shrink-0 place-items-center rounded-xl bg-gold/10 text-gold">${icon('bullhorn')}</span><p class="text-sm leading-relaxed text-muted">Your advert appears on the homepage, including before sign-in. Announcements stay still so everyone can read them.</p></div><form id="advert-form" data-draft="advert" class="space-y-5"><p id="advert-form-error" role="alert" class="hidden rounded-xl border border-red-400/30 bg-red-400/5 p-4 text-sm text-red-200"></p><label class="block text-sm">Title<input required name="title" maxlength="120" class="${input} mt-2" placeholder="Your announcement title"></label><label class="block text-sm">Message<textarea required name="message" maxlength="2000" rows="5" class="${input} mt-2" placeholder="Write the message you want everyone to see…"></textarea></label><div class="grid sm:grid-cols-2 gap-5"><label class="block text-sm">Image URL <span class="text-muted">(optional)</span><input name="image_url" type="url" maxlength="2048" class="${input} mt-2" placeholder="https://example.com/image.webp"><span class="block text-xs leading-relaxed text-muted mt-2">Paste a publicly accessible HTTPS image link.</span></label><label class="block text-sm">Website link <span class="text-muted">(optional)</span><input name="link_url" type="url" maxlength="2048" class="${input} mt-2" placeholder="https://example.com"><span class="block text-xs leading-relaxed text-muted mt-2">Adds a Learn more link to your advert.</span></label></div><button type="submit" class="${primary} w-full sm:w-auto">${icon('paper-plane','mr-2')}Send</button><p class="text-xs leading-relaxed text-muted">Only authorized administrators can publish or remove adverts. Do not include private account details in public announcements.</p></form></section><section class="mt-9"><h2 class="font-display text-xl font-bold mb-5">Published adverts <span id="advert-count" class="text-sm text-muted ml-2">${advertisements.length}</span></h2><div id="published-adverts">${publishedAdverts()}</div></section>`;
   }
 
+  // Moving adverts use separate records; stationary announcements are never replaced.
+  // Playback is saved per advert in this browser, including partial passes and manual pauses.
+  const reducedMovingMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+  function movingProgress(id) {
+    if (movingProgressCache.has(id)) return movingProgressCache.get(id);
+    const progress = {id,elapsed:0,duration:0,done:false,paused:false,reason:''};
+    try {
+      const saved = JSON.parse(localStorage.getItem(movingStorageKey) || 'null');
+      if (saved?.id === id && Number.isFinite(saved.elapsed) && saved.elapsed >= 0 && Number.isFinite(saved.duration) && saved.duration >= 45000) {
+        progress.duration = saved.duration; progress.elapsed = Math.min(saved.elapsed,saved.duration*2);
+        progress.done = saved.done === true || progress.elapsed >= progress.duration*2;
+        progress.paused = saved.paused === true;
+        progress.reason = ['complete','reduced-motion','unavailable'].includes(saved.reason) ? saved.reason : progress.done ? 'complete' : '';
+      }
+    } catch (_) { /* In-memory progress still works when browser storage is restricted. */ }
+    movingProgressCache.set(id,progress); return progress;
+  }
+  function saveMovingProgress(progress) {
+    try { localStorage.setItem(movingStorageKey,JSON.stringify(progress)); } catch (_) { /* Never block the page because storage is unavailable. */ }
+  }
+  function captureMovingProgress(session=movingPlayback) {
+    if (!session) return;
+    if (session.animation && !session.progress.done) {
+      const elapsed = Number(session.animation.currentTime);
+      if (Number.isFinite(elapsed)) session.progress.elapsed = Math.max(0,Math.min(elapsed,session.progress.duration*2));
+    }
+    saveMovingProgress(session.progress);
+  }
+  function stopMovingPlayback() {
+    const session = movingPlayback; if (!session) return;
+    captureMovingProgress(session); movingPlayback = null;
+    clearInterval(session.timer); session.cleanup?.();
+    if (session.animation) { session.animation.onfinish = null; session.animation.cancel(); }
+  }
+  function movingDetails(advert,scrolling=false) {
+    if (scrolling) return `<span class="font-display text-base font-bold text-slate-100">${esc(advert.title)}</span><span class="text-gold" aria-hidden="true">—</span><span class="text-sm text-slate-200">${esc(advert.message.replace(/\s+/g,' '))}</span>`;
+    return `<h3 class="font-display text-base font-bold leading-snug break-words [overflow-wrap:anywhere]">${esc(advert.title)}</h3><p class="mt-3 text-sm leading-relaxed text-slate-200 whitespace-pre-wrap break-words [overflow-wrap:anywhere]">${esc(advert.message)}</p>`;
+  }
+  function movingAdvertHomeContent() {
+    if (!movingAdvert) return movingAdvertError ? `<div role="alert" class="${card} mb-6 flex flex-wrap items-center justify-between gap-3 p-4 text-sm text-muted"><span>${esc(movingAdvertError)}</span><button type="button" data-action="retry-moving-advert" class="text-gold min-h-11 px-3">Retry moving advert</button></div>` : '';
+    const image = secureUrl(movingAdvert.image_url), link = secureUrl(movingAdvert.link_url);
+    return `<section aria-label="Moving announcement" class="${card} mb-7 overflow-hidden border-gold/30"><div class="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b border-line px-5 py-3 sm:px-6"><h2 class="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-gold">${icon('bullhorn')}Latest moving advert</h2><div class="flex flex-wrap items-center gap-3"><span data-moving-status role="status" aria-live="polite" class="text-xs text-muted">Two slow passes, then stationary</span><button type="button" data-action="toggle-moving-advert" data-moving-control class="inline-flex min-h-11 items-center gap-2 rounded-lg border border-line px-3 py-2 text-xs font-semibold hover:bg-white/5" aria-label="Pause scrolling announcement">${icon('pause')}Pause</button></div></div><div class="flex items-start gap-4 px-5 sm:px-6">${image ? `<img data-advert-image src="${esc(image)}" alt="Image accompanying the moving announcement: ${esc(movingAdvert.title)}" loading="lazy" decoding="async" width="96" height="96" class="my-4 h-16 w-16 shrink-0 rounded-lg bg-ink object-contain sm:h-24 sm:w-24">` : ''}<div data-moving-lane class="min-w-0 flex-1 overflow-hidden"><div data-moving-accessible class="sr-only">${movingDetails(movingAdvert)}</div><div data-moving-track aria-hidden="true" class="inline-flex w-max max-w-none items-baseline gap-6 whitespace-nowrap py-4 will-change-transform">${movingDetails(movingAdvert,true)}</div></div></div>${link ? `<div class="px-5 pb-4 sm:px-6"><a href="${esc(link)}" target="_blank" rel="noopener noreferrer" class="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-gold hover:underline">Learn more ${icon('arrow-up-right-from-square','text-xs')}</a></div>` : ''}</section>`;
+  }
+  function movingAdvertBanner() { return `<div data-moving-advert-home>${movingAdvertHomeContent()}</div>`; }
+  function staticMovingPlayback(session) {
+    session.track.className = 'w-full py-4'; session.track.removeAttribute('aria-hidden');
+    session.track.innerHTML = movingDetails(session.advert); session.accessible.classList.add('hidden');
+    session.control.classList.add('hidden');
+    session.status.textContent = session.progress.reason === 'complete' ? 'Stopped after 2 passes' : session.progress.reason === 'reduced-motion' ? 'Stationary · reduced motion' : 'Stationary announcement';
+  }
+  function finishMovingPlayback(session,reason='complete') {
+    if (movingPlayback !== session) return;
+    session.progress.done = true; session.progress.reason = reason;
+    if (reason === 'complete') session.progress.elapsed = session.progress.duration*2;
+    clearInterval(session.timer);
+    if (session.animation) { session.animation.onfinish = null; session.animation.cancel(); session.animation = null; }
+    staticMovingPlayback(session); saveMovingProgress(session.progress);
+  }
+  function updateMovingPlayback() {
+    const session = movingPlayback; if (!session || session.progress.done) return;
+    if (reducedMovingMotion.matches) { finishMovingPlayback(session,'reduced-motion'); return; }
+    if (!session.animation) return;
+    const paused = session.progress.paused || session.hovered || document.hidden || !installPopup.classList.contains('hidden');
+    if (paused) session.animation.pause(); else if (session.animation.playState !== 'running') session.animation.play();
+    session.control.innerHTML = icon(session.progress.paused ? 'play' : 'pause') + (session.progress.paused ? 'Resume' : 'Pause');
+    session.control.setAttribute('aria-label',session.progress.paused ? 'Resume scrolling announcement' : 'Pause scrolling announcement');
+    const pass = Math.min(2,Math.floor((Number(session.animation.currentTime)||0)/session.progress.duration)+1);
+    const label = paused ? 'Paused · scroll stops after 2 passes' : `Pass ${pass} of 2 · slow scroll`;
+    if (session.status.textContent !== label) session.status.textContent = label;
+  }
+  function mountMovingAdvert() {
+    stopMovingPlayback();
+    const host = document.querySelector('[data-moving-advert-home]');
+    if (!movingAdvert || !host?.querySelector('[data-moving-track]')) return;
+    const session = {advert:movingAdvert,progress:movingProgress(movingAdvert.id),track:host.querySelector('[data-moving-track]'),lane:host.querySelector('[data-moving-lane]'),accessible:host.querySelector('[data-moving-accessible]'),control:host.querySelector('[data-moving-control]'),status:host.querySelector('[data-moving-status]'),animation:null,timer:null,hovered:false,cleanup:null};
+    movingPlayback = session;
+    if (session.progress.done) { staticMovingPlayback(session); return; }
+    if (reducedMovingMotion.matches) { finishMovingPlayback(session,'reduced-motion'); return; }
+    if (typeof session.track.animate !== 'function') { finishMovingPlayback(session,'unavailable'); return; }
+    const enter = () => { session.hovered = true; updateMovingPlayback(); };
+    const leave = () => { session.hovered = false; updateMovingPlayback(); };
+    session.lane.addEventListener('mouseenter',enter); session.lane.addEventListener('mouseleave',leave);
+    session.cleanup = () => { session.lane.removeEventListener('mouseenter',enter); session.lane.removeEventListener('mouseleave',leave); };
+    // Measure after fonts settle. Only transforms animate; there are exactly two iterations.
+    const start = () => {
+      if (movingPlayback !== session || !session.track.isConnected) return;
+      const width = session.lane.clientWidth, textWidth = session.track.scrollWidth;
+      if (!width || !textWidth) { finishMovingPlayback(session,'unavailable'); return; }
+      if (!session.progress.duration) session.progress.duration = Math.max(45000,Math.ceil((width+textWidth)/28*1000));
+      if (session.progress.elapsed >= session.progress.duration*2) { finishMovingPlayback(session); return; }
+      session.animation = session.track.animate([{transform:`translateX(${width}px)`},{transform:`translateX(-${textWidth}px)`}],{duration:session.progress.duration,iterations:2,easing:'linear'});
+      session.animation.pause(); session.animation.currentTime = session.progress.elapsed;
+      session.animation.onfinish = () => finishMovingPlayback(session);
+      updateMovingPlayback(); saveMovingProgress(session.progress);
+      session.timer = setInterval(() => { if (movingPlayback !== session) return; captureMovingProgress(session); updateMovingPlayback(); },2000);
+    };
+    if (document.fonts?.ready) document.fonts.ready.then(() => requestAnimationFrame(start)).catch(() => requestAnimationFrame(start));
+    else requestAnimationFrame(start);
+  }
+  function movingAdvertAdminContent() {
+    return `${movingAdvertError ? `<p role="alert" class="mb-4 text-sm text-amber-200">${esc(movingAdvertError)} <button type="button" data-action="retry-moving-advert" class="min-h-11 text-gold hover:underline">Retry</button></p>` : ''}${movingAdvert ? `${advertCard(movingAdvert)}<p class="mt-3 text-xs leading-relaxed text-muted">Published ${esc(when(movingAdvert.created_at))}. Only this latest post appears in the moving banner.</p>` : `<div class="${card}">${empty('No moving advert published yet. Existing stationary adverts remain unchanged.')}</div>`}`;
+  }
+  function refreshMovingAdvertViews() {
+    stopMovingPlayback();
+    document.querySelectorAll('[data-moving-advert-home]').forEach(host => { host.innerHTML = movingAdvertHomeContent(); });
+    if ($('published-moving-advert')) $('published-moving-advert').innerHTML = movingAdvertAdminContent();
+    mountMovingAdvert();
+  }
+  async function loadMovingAdvert() {
+    if (!sb) return; if (movingAdvertJob) return movingAdvertJob;
+    const revision = movingAdvertRevision;
+    movingAdvertJob = (async () => {
+      try {
+        const {data,error} = await sb.from('moving_advertisements').select(advertColumns).order('created_at',{ascending:false}).order('id',{ascending:false}).limit(1).maybeSingle();
+        if (revision !== movingAdvertRevision) return;
+        if (error) throw error;
+        if (data && (typeof data.id !== 'string' || typeof data.title !== 'string' || typeof data.message !== 'string')) throw new Error('Invalid moving announcement response.');
+        const changed = JSON.stringify(data) !== JSON.stringify(movingAdvert) || !!movingAdvertError;
+        movingAdvert = data; movingAdvertError = ''; if (changed) refreshMovingAdvertViews();
+      } catch (error) {
+        if (revision !== movingAdvertRevision) return;
+        console.error('Moving announcement load:',error.message); movingAdvertError = 'The moving advert could not be loaded. Please retry.'; refreshMovingAdvertViews();
+      }
+    })();
+    try { await movingAdvertJob; } finally { movingAdvertJob = null; }
+  }
+  function sendMovingAdvertPage() {
+    return heading('Send Moving Advert','Add a separate slow-moving announcement without changing your existing adverts.') + `<section class="${card} max-w-3xl p-6 sm:p-8"><div class="mb-6 flex items-start gap-3"><span class="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-gold/10 text-gold">${icon('bullhorn')}</span><div class="text-sm leading-relaxed text-muted"><p>Each visitor sees two slow passes, then the full message stays still. Publish another moving advert to start a new two-pass announcement.</p><p class="mt-3">The newest post replaces only the moving banner. Your existing stationary adverts are kept exactly as they are.</p></div></div><form id="moving-advert-form" data-draft="moving-advert" class="space-y-5"><p role="alert" class="hidden rounded-xl border border-red-400/30 bg-red-400/5 p-4 text-sm text-red-200"></p><label class="block text-sm">Title<input required name="title" maxlength="120" class="${input} mt-2" placeholder="Moving announcement title"></label><label class="block text-sm">Message<textarea required name="message" maxlength="2000" rows="5" class="${input} mt-2" placeholder="Write the message everyone should read…"></textarea></label><div class="grid gap-5 sm:grid-cols-2"><label class="block text-sm">Image URL <span class="text-muted">(optional)</span><input name="image_url" type="url" maxlength="2048" class="${input} mt-2" placeholder="https://example.com/image.webp"><span class="mt-2 block text-xs leading-relaxed text-muted">The image stays still beside the moving text.</span></label><label class="block text-sm">Website link <span class="text-muted">(optional)</span><input name="link_url" type="url" maxlength="2048" class="${input} mt-2" placeholder="https://example.com"><span class="mt-2 block text-xs leading-relaxed text-muted">Adds a stationary Learn more link.</span></label></div><button type="submit" class="${primary} w-full sm:w-auto">${icon('paper-plane','mr-2')}Publish moving advert</button><p class="text-xs leading-relaxed text-muted">Each pass takes at least 45 seconds, longer for lengthy text. Visitors can pause it. Playback progress is saved in their browser when storage is available; reduced-motion settings show the message without scrolling. Only authorized administrators can publish.</p></form></section><section class="mt-9 max-w-3xl"><h2 class="mb-5 font-display text-xl font-bold">Latest moving advert</h2><div id="published-moving-advert">${movingAdvertAdminContent()}</div></section>`;
+  }
+
   function formError() { return authError ? `<div role="alert" class="rounded-xl border border-red-400/30 bg-red-400/5 p-4 mb-5 text-sm text-red-200 whitespace-pre-wrap">${esc(messageText(authError))}</div>` : ''; }
   function passwordField(label='Password',name='password',create=false) {
     return `<label class="block text-sm">${label}<input required type="password" name="${name}" ${create ? 'minlength="8"' : ''} maxlength="1024" autocomplete="${create ? 'new-password' : 'current-password'}" class="${input} mt-2" placeholder="${create ? 'At least 8 characters' : 'Enter your password'}"></label>`;
@@ -232,8 +365,8 @@ document.addEventListener('DOMContentLoaded', () => {
     return `<div class="flex gap-5 border-b border-line mb-7"><button data-action="auth-mode" data-value="login" class="pb-4 text-sm ${!signup ? 'text-gold border-b-2 border-gold' : 'text-muted'}">Sign in</button><button data-action="auth-mode" data-value="signup" class="pb-4 text-sm ${signup ? 'text-gold border-b-2 border-gold' : 'text-muted'}">Create account</button></div><h2 class="font-display font-bold text-2xl">${signup ? 'Create your account' : 'Welcome back'}</h2><p class="text-muted text-sm mt-2 mb-6 leading-relaxed">${signup ? 'Enter your details to receive an email verification code. Create your password in the next step.' : 'Sign in with your email address and password.'}</p>${formError()}<form id="auth-form" class="space-y-4">${signup ? `<label class="block text-sm">Email address<input required type="email" name="email" maxlength="254" autocomplete="email" class="${input} mt-2" placeholder="you@example.com"></label><label class="block text-sm">Full name<input required name="name" maxlength="120" autocomplete="name" class="${input} mt-2" placeholder="Your full name"></label><label class="block text-sm">Country<select name="country" class="${input} mt-2">${countries()}</select></label><p class="text-xs text-muted leading-relaxed">Use your own email address. Verification uses email codes only.</p>` : `<label class="block text-sm">Email address<input required type="email" name="identity" maxlength="254" autocomplete="username" inputmode="email" autocapitalize="none" spellcheck="false" class="${input} mt-2" placeholder="you@example.com"></label>${passwordField()}<button type="button" data-action="forgot" class="text-xs text-gold hover:underline">Forgot password?</button>`}<button type="submit" class="${primary} w-full" ${!connected || (signup && settings?.external?.email === false) ? 'disabled' : ''}>${signup ? 'Get verification code' : 'Sign in'} ${icon('arrow-right','ml-2')}</button></form><div class="border-t border-line mt-6 pt-5 flex items-start gap-3 text-xs text-muted leading-relaxed">${icon('shield-halved','text-gold mt-0.5')}<p>Your account is protected. Verify your email once at signup. New accounts start at zero until deposits are approved.${settings?.external?.email === false ? '<br><span class="text-amber-200">Email verification is unavailable. Please contact Admin.</span>' : ''}</p></div>`;
   }
   function auth() {
-    $('app').innerHTML = `<div class="max-w-7xl mx-auto px-5 md:px-10"><header class="py-7 flex flex-wrap justify-between items-center gap-4">${brand()}<div class="flex items-center gap-5"><span class="hidden md:block text-sm text-muted">Built for a global community ${icon('globe','ml-2 text-gold')}</span>${downloadButton()}</div></header>${homepageAdverts()}<main id="main" class="grid lg:grid-cols-[1.15fr_1fr] items-center gap-12 lg:gap-24 py-8 lg:py-14"><section><div class="inline-flex items-center gap-2 rounded-full border border-gold/25 bg-gold/5 px-3 py-1.5 text-xs text-gold"><span class="w-1.5 h-1.5 rounded-full bg-gold"></span>YOUR CRYPTO. ONE CLEAR VIEW.</div><h1 class="font-display text-4xl sm:text-5xl xl:text-6xl font-extrabold tracking-tight leading-[1.15] mt-7">Watch Your<br>Investments <span class="text-gold">Grow.</span></h1><p class="max-w-md text-muted leading-relaxed mt-6">See your profits, track your returns, and enjoy seamless investment liquidation. Stay informed about your earnings and take control of every investment opportunity with confidence.</p><div class="grid grid-cols-2 gap-4 max-w-md mt-8"><div class="${card} p-5"><span class="text-gold">${icon('wallet')}</span><p class="font-display font-bold mt-4">Two networks.</p><p class="text-xs text-muted mt-2">USDT · BEP20 / TRC20</p></div><div class="${card} p-5"><span class="text-gold">${icon('database')}</span><p class="font-display font-bold mt-4">Real records.</p><p class="text-xs text-muted mt-2">Your authenticated account</p></div></div></section><section class="${card} p-6 sm:p-9">${authContent()}</section></main><footer class="border-t border-line py-6 text-xs text-muted flex flex-wrap justify-between gap-3"><span>© ${new Date().getFullYear()} Crypto Returns</span><span>USDT · BEP20 · TRC20</span></footer></div>`;
-    enhancePasswordFields();
+    $('app').innerHTML = `<div class="max-w-7xl mx-auto px-5 md:px-10"><header class="py-7 flex flex-wrap justify-between items-center gap-4">${brand()}<div class="flex items-center gap-5"><span class="hidden md:block text-sm text-muted">Built for a global community ${icon('globe','ml-2 text-gold')}</span>${downloadButton()}</div></header>${movingAdvertBanner()}${homepageAdverts()}<main id="main" class="grid lg:grid-cols-[1.15fr_1fr] items-center gap-12 lg:gap-24 py-8 lg:py-14"><section><div class="inline-flex items-center gap-2 rounded-full border border-gold/25 bg-gold/5 px-3 py-1.5 text-xs text-gold"><span class="w-1.5 h-1.5 rounded-full bg-gold"></span>YOUR CRYPTO. ONE CLEAR VIEW.</div><h1 class="font-display text-4xl sm:text-5xl xl:text-6xl font-extrabold tracking-tight leading-[1.15] mt-7">Watch Your<br>Investments <span class="text-gold">Grow.</span></h1><p class="max-w-md text-muted leading-relaxed mt-6">See your profits, track your returns, and enjoy seamless investment liquidation. Stay informed about your earnings and take control of every investment opportunity with confidence.</p><div class="grid grid-cols-2 gap-4 max-w-md mt-8"><div class="${card} p-5"><span class="text-gold">${icon('wallet')}</span><p class="font-display font-bold mt-4">Two networks.</p><p class="text-xs text-muted mt-2">USDT · BEP20 / TRC20</p></div><div class="${card} p-5"><span class="text-gold">${icon('database')}</span><p class="font-display font-bold mt-4">Real records.</p><p class="text-xs text-muted mt-2">Your authenticated account</p></div></div></section><section class="${card} p-6 sm:p-9">${authContent()}</section></main><footer class="border-t border-line py-6 text-xs text-muted flex flex-wrap justify-between gap-3"><span>© ${new Date().getFullYear()} Crypto Returns</span><span>USDT · BEP20 · TRC20</span></footer></div>`;
+    enhancePasswordFields(); mountMovingAdvert();
   }
   function renderLoading() {
     $('app').innerHTML = `<div class="max-w-7xl mx-auto px-5 py-7"><header class="flex flex-wrap justify-between items-center gap-4">${brand()}${downloadButton()}</header><main id="main" class="max-w-xl mx-auto py-20 text-center"><div class="text-gold">${icon('circle-notch','text-2xl motion-safe:animate-spin')}</div><h1 class="font-display text-xl font-bold mt-5">Loading your account</h1><p class="text-sm text-muted mt-3">Retrieving your records securely.</p><button data-action="logout" class="${secondary} mt-7">LOG OUT</button></main></div>`;
@@ -242,16 +375,17 @@ document.addEventListener('DOMContentLoaded', () => {
     $('app').innerHTML = `<div class="max-w-3xl mx-auto px-5 py-8"><header class="flex flex-wrap items-center justify-between gap-4">${brand()}${downloadButton()}</header><main id="main" class="${card} p-7 sm:p-10 mt-12"><div class="w-12 h-12 rounded-xl bg-red-400/10 text-red-300 grid place-items-center text-xl">${icon('plug-circle-exclamation')}</div><h1 class="font-display text-2xl font-bold mt-5">Unable to load account services</h1><p class="text-sm text-muted mt-3 leading-relaxed">No substitute balances or demonstration records are displayed. Check the error and retry.</p><div role="alert" class="rounded-xl border border-red-400/25 bg-ink p-4 mt-5 text-sm text-red-200 break-words whitespace-pre-wrap">${esc(messageText(screenError))}</div><div class="flex flex-wrap gap-3 mt-6"><button data-action="retry" class="${primary}">Retry connection</button>${authUser ? `<button data-action="logout" class="${secondary}">LOG OUT</button>` : ''}</div></main></div>`;
   }
   const userNav = [['home','house','Home','See money'],['invest','arrow-trend-up','Invest','Put money'],['withdraw','wallet','Withdraw','Take money'],['referral','user-group','Referral','Invite'],['account','circle-user','Account','Help']];
-  const adminNav = [['home','chart-pie','Overview','Platform activity'],['users','users','Users','Manage accounts'],['deposits','arrow-down','Deposits','Review requests'],['withdrawals','arrow-up','Withdrawals','Pending only'],['referral','user-group','Referrals','Track invitations'],['account','headset','Customer care','Messages'],['history','clock-rotate-left','History','Processed requests'],['adverts','bullhorn','Send Advert','Homepage announcements'],['settings','sliders','Settings','Deposit wallets']];
+  const adminNav = [['home','chart-pie','Overview','Platform activity'],['users','users','Users','Manage accounts'],['deposits','arrow-down','Deposits','Review requests'],['withdrawals','arrow-up','Withdrawals','Pending only'],['referral','user-group','Referrals','Track invitations'],['account','headset','Customer care','Messages'],['history','clock-rotate-left','History','Processed requests'],['adverts','bullhorn','Send Advert','Homepage announcements'],['moving-adverts','arrows-left-right','Moving Advert','Two slow passes'],['settings','sliders','Settings','Deposit wallets']];
   function hasUnread(u) { return state.messages.some(m => u.role === 'admin' ? m.unread_admin : m.user_id === u.id && m.unread_user); }
   function render() {
+    stopMovingPlayback();
     needsRender = false;
     if (screenError) return renderError();
     if (loading && authUser && !state) return renderLoading();
     const u = me(); if (!u) return auth();
     const admin = access.role === 'admin', nav = admin ? adminNav : userNav;
-    $('app').innerHTML = `<div class="lg:flex min-h-screen"><aside class="hidden lg:flex w-64 shrink-0 border-r border-line flex-col px-5 py-7 bg-[#0c111d]">${brand()}<div class="mt-10 mb-3 px-3 text-[10px] tracking-[.18em] text-muted">${admin ? 'ADMIN WORKSPACE' : 'YOUR WORKSPACE'}</div><nav aria-label="Workspace navigation" class="space-y-2">${nav.map(([id,i,title,sub]) => `<button data-action="nav" data-value="${id}" ${page === id ? 'aria-current="page"' : ''} class="w-full flex gap-3 items-center rounded-xl p-3 text-left ${page === id ? 'bg-gold/10 text-gold' : 'text-muted hover:bg-white/5 hover:text-white'}">${icon(i,'w-5')}<span><span class="block text-sm font-semibold">${title}</span><span class="block text-[11px] mt-0.5">${sub}</span></span>${id === 'account' && hasUnread(u) ? '<span class="ml-auto h-2 w-2 rounded-full bg-gold"></span>' : ''}</button>`).join('')}</nav><div class="mt-auto pt-10"><div class="rounded-xl border border-line p-4"><div class="text-gold text-sm mb-2">${icon('circle-info','mr-2')}Need a hand?</div><p class="text-muted text-xs leading-relaxed">Your private support conversation is one click away.</p><button data-action="nav" data-value="account" class="text-xs mt-3 min-h-11 font-bold hover:text-gold">${admin ? 'Open customer care' : 'Contact support'} ${icon('arrow-right','ml-2')}</button></div><button data-action="logout" class="mt-5 flex items-center gap-3 text-sm text-muted hover:text-white p-3 min-h-11">${icon('right-from-bracket')}${admin ? 'LOG OUT' : 'Sign out'}</button></div></aside><div class="min-w-0 flex-1"><header class="border-b border-line px-5 md:px-8 lg:px-10 py-5 flex flex-wrap items-center justify-between gap-4"><div class="lg:hidden">${brand()}</div><div class="hidden lg:flex gap-2 items-center text-xs text-muted">Workspace ${icon('chevron-right','text-[9px] mx-2')}<span class="text-slate-200">${nav.find(n => n[0] === page)?.[2] || 'Overview'}</span></div><div class="flex flex-wrap items-center gap-2 sm:gap-3">${downloadButton()}${admin ? `<button data-action="logout" class="inline-flex min-h-11 items-center gap-2 rounded-xl border border-line px-4 py-3 text-xs font-bold text-slate-100 hover:border-gold hover:bg-white/5">${icon('right-from-bracket')}LOG OUT</button>` : ''}<span class="hidden xl:inline text-xs text-muted">${icon('globe','mr-2')}${esc(countryName(u.country))} · USD</span><button data-action="refresh" aria-label="Refresh records" class="h-11 w-11 rounded-xl border border-line hover:bg-white/5">${icon('rotate')}</button><button data-action="nav" data-value="account" aria-label="Open messages" class="relative h-11 w-11 rounded-xl border border-line hover:bg-white/5">${icon('bell')}${hasUnread(u) ? '<span class="absolute right-2 top-2 h-1.5 w-1.5 bg-gold rounded-full"></span>' : ''}</button></div></header>${admin ? `<nav aria-label="Admin navigation" class="lg:hidden flex gap-2 overflow-x-auto px-5 pt-4 pb-1">${nav.map(n => `<button class="shrink-0 min-h-11 px-3 py-2 rounded-lg text-sm ${page === n[0] ? 'bg-gold text-ink' : 'border border-line'}" data-action="nav" data-value="${n[0]}">${n[2]}</button>`).join('')}</nav>` : ''}<main id="main" class="max-w-[1440px] mx-auto px-5 md:px-8 lg:px-10 pt-8 pb-28 lg:pb-8">${content(u)}</main><footer class="hidden lg:flex border-t border-line px-10 py-5 text-[11px] text-muted justify-between"><span>© ${new Date().getFullYear()} Crypto Returns</span><span>USDT · BEP20 · TRC20</span></footer></div></div>${!admin ? `<nav aria-label="Main navigation" class="lg:hidden fixed bottom-0 inset-x-0 z-30 bg-[#0c111d] border-t border-line flex justify-around px-1 pt-3 pb-[max(1.25rem,env(safe-area-inset-bottom))]">${userNav.map(n => `<button data-action="nav" data-value="${n[0]}" ${page === n[0] ? 'aria-current="page"' : ''} class="w-1/5 min-h-11 flex flex-col items-center gap-1.5 text-[10px] ${page === n[0] ? 'text-gold' : 'text-muted'}">${icon(n[1],'text-base')}<span>${n[2]}</span></button>`).join('')}</nav>` : ''}`;
-    enhancePasswordFields(); restoreDrafts(); updateWithdrawalPreview();
+    $('app').innerHTML = `<div class="lg:flex min-h-screen"><aside class="hidden lg:flex w-64 shrink-0 border-r border-line flex-col px-5 py-7 bg-[#0c111d]">${brand()}<div class="mt-10 mb-3 px-3 text-[10px] tracking-[.18em] text-muted">${admin ? 'ADMIN WORKSPACE' : 'YOUR WORKSPACE'}</div><nav aria-label="Workspace navigation" class="space-y-2">${nav.map(([id,i,title,sub]) => `<button data-action="nav" data-value="${id}" ${page === id ? 'aria-current="page"' : ''} class="w-full flex gap-3 items-center rounded-xl p-3 text-left ${page === id ? 'bg-gold/10 text-gold' : 'text-muted hover:bg-white/5 hover:text-white'}">${icon(i,'w-5')}<span><span class="block text-sm font-semibold">${title}</span><span class="block text-[11px] mt-0.5">${sub}</span></span>${id === 'account' && hasUnread(u) ? '<span class="ml-auto h-2 w-2 rounded-full bg-gold"></span>' : ''}</button>`).join('')}</nav><div class="mt-auto pt-10"><div class="rounded-xl border border-line p-4"><div class="text-gold text-sm mb-2">${icon('circle-info','mr-2')}Need a hand?</div><p class="text-muted text-xs leading-relaxed">Your private support conversation is one click away.</p><button data-action="nav" data-value="account" class="text-xs mt-3 min-h-11 font-bold hover:text-gold">${admin ? 'Open customer care' : 'Contact support'} ${icon('arrow-right','ml-2')}</button></div><button data-action="logout" class="mt-5 flex items-center gap-3 text-sm text-muted hover:text-white p-3 min-h-11">${icon('right-from-bracket')}${admin ? 'LOG OUT' : 'Sign out'}</button></div></aside><div class="min-w-0 flex-1"><header class="border-b border-line px-5 md:px-8 lg:px-10 py-5 flex flex-wrap items-center justify-between gap-4"><div class="lg:hidden">${brand()}</div><div class="hidden lg:flex gap-2 items-center text-xs text-muted">Workspace ${icon('chevron-right','text-[9px] mx-2')}<span class="text-slate-200">${nav.find(n => n[0] === page)?.[2] || 'Overview'}</span></div><div class="flex flex-wrap items-center gap-2 sm:gap-3">${downloadButton()}${admin ? `<button data-action="logout" class="inline-flex min-h-11 items-center gap-2 rounded-xl border border-line px-4 py-3 text-xs font-bold text-slate-100 hover:border-gold hover:bg-white/5">${icon('right-from-bracket')}LOG OUT</button>` : ''}<span class="hidden xl:inline text-xs text-muted">${icon('globe','mr-2')}${esc(countryName(u.country))} · USD</span><button data-action="refresh" aria-label="Refresh records" class="h-11 w-11 rounded-xl border border-line hover:bg-white/5">${icon('rotate')}</button><button data-action="nav" data-value="account" aria-label="Open messages" class="relative h-11 w-11 rounded-xl border border-line hover:bg-white/5">${icon('bell')}${hasUnread(u) ? '<span class="absolute right-2 top-2 h-1.5 w-1.5 bg-gold rounded-full"></span>' : ''}</button></div></header>${admin ? `<nav aria-label="Admin navigation" class="lg:hidden flex gap-2 overflow-x-auto px-5 pt-4 pb-1">${nav.map(n => `<button class="shrink-0 min-h-11 px-3 py-2 rounded-lg text-sm ${page === n[0] ? 'bg-gold text-ink' : 'border border-line'}" data-action="nav" data-value="${n[0]}">${n[2]}</button>`).join('')}</nav>` : ''}<main id="main" class="max-w-[1440px] mx-auto px-5 md:px-8 lg:px-10 pt-8 pb-28 lg:pb-8">${movingAdvertBanner()}${content(u)}</main><footer class="hidden lg:flex border-t border-line px-10 py-5 text-[11px] text-muted justify-between"><span>© ${new Date().getFullYear()} Crypto Returns</span><span>USDT · BEP20 · TRC20</span></footer></div></div>${!admin ? `<nav aria-label="Main navigation" class="lg:hidden fixed bottom-0 inset-x-0 z-30 bg-[#0c111d] border-t border-line flex justify-around px-1 pt-3 pb-[max(1.25rem,env(safe-area-inset-bottom))]">${userNav.map(n => `<button data-action="nav" data-value="${n[0]}" ${page === n[0] ? 'aria-current="page"' : ''} class="w-1/5 min-h-11 flex flex-col items-center gap-1.5 text-[10px] ${page === n[0] ? 'text-gold' : 'text-muted'}">${icon(n[1],'text-base')}<span>${n[2]}</span></button>`).join('')}</nav>` : ''}`;
+    enhancePasswordFields(); restoreDrafts(); updateWithdrawalPreview(); mountMovingAdvert();
   }
   function chart() {
     const records = [...state.ledger].sort((a,b) => new Date(a.accrual_at)-new Date(b.accrual_at));
@@ -336,6 +470,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (page === 'home') return adminHome();
     if (page === 'account') return account(u);
     if (page === 'adverts') return sendAdvertPage();
+    if (page === 'moving-adverts') return sendMovingAdvertPage();
     if (page === 'settings') return settingsPage();
     if (page === 'users') return heading('Users management','Recorded balances, referrals, and account access controls.')+searchBox('Search name, phone, or country')+`<div class="grid xl:grid-cols-2 gap-5">${state.users.filter(f => f.role !== 'admin' && matches(`${f.name} ${f.phone} ${countryName(f.country)}`)).map(userCard).join('')||empty('No matching users.')}</div>`;
     if (page === 'deposits' || page === 'withdrawals') {
@@ -521,7 +656,7 @@ document.addEventListener('DOMContentLoaded', () => {
           },0);
         });
       }
-      void loadAdverts();
+      void loadAdverts(); void loadMovingAdvert();
       const [config,sessionResult] = await Promise.all([authSettings(),sb.auth.getSession()]);
       if (sessionResult.error) throw sessionResult.error;
       settings = config; connected = true;
@@ -568,6 +703,12 @@ document.addEventListener('DOMContentLoaded', () => {
         b.setAttribute('aria-pressed',String(visible)); b.setAttribute('aria-label',visible ? 'Hide password' : 'Show password'); b.title = visible ? 'Hide password' : 'Show password'; b.innerHTML = icon(visible ? 'eye-slash' : 'eye'); return;
       }
       if (action === 'retry-adverts') { await loadAdverts(); return; }
+      if (action === 'retry-moving-advert') { await loadMovingAdvert(); return; }
+      if (action === 'toggle-moving-advert') {
+        if (!movingPlayback || movingPlayback.progress.done) return;
+        movingPlayback.progress.paused = !movingPlayback.progress.paused;
+        updateMovingPlayback(); captureMovingProgress(); return;
+      }
       if (action === 'all-adverts') { modal('All announcements',`<div class="space-y-5">${advertisements.map(a => advertCard(a)).join('')}</div>`); return; }
       if (action === 'auth-mode' || action === 'auth-back') return await resetAuthMode(action === 'auth-mode' ? value : 'login');
       if (action === 'forgot') return await resetAuthMode('recovery');
@@ -581,7 +722,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (page === 'account') { await rpc('cr_mark_messages_read',{}); await sync(); }
         if (page === 'referral' && me()?.role !== 'admin') await loadReferrals();
         if (page === 'adverts') void loadAdverts();
-      } else if (action === 'refresh') { await Promise.all([sync(),loadAdverts()]); if (page === 'referral' && me()?.role !== 'admin') await loadReferrals(); if (state) toast('Records refreshed.'); }
+        if (page === 'moving-adverts') void loadMovingAdvert();
+      } else if (action === 'refresh') { await Promise.all([sync(),loadAdverts(),loadMovingAdvert()]); if (page === 'referral' && me()?.role !== 'admin') await loadReferrals(); if (state) toast('Records refreshed.'); }
       else if (action === 'load-referrals') await loadReferrals();
       else if (action === 'amount') { depositAmount = Number(value); render(); }
       else if (action === 'network') { network = value; ack = false; render(); }
@@ -620,7 +762,7 @@ document.addEventListener('DOMContentLoaded', () => {
   document.addEventListener('submit',async e => {
     e.preventDefault(); if (busy) return;
     const form = e.target, fd = new FormData(form), button = form.querySelector('button[type="submit"]');
-    const oldText = button?.textContent, isAuth = ['auth-form','verify-form','recovery-form'].includes(form.id), isCredentials = form.id === 'admin-login-form', isAdvert = form.id === 'advert-form';
+    const oldText = button?.textContent, isAuth = ['auth-form','verify-form','recovery-form'].includes(form.id), isCredentials = form.id === 'admin-login-form', isAdvert = ['advert-form','moving-advert-form'].includes(form.id);
     busy = true; if (button) { button.disabled = true; button.textContent = 'Please wait…'; } form.setAttribute('aria-busy','true');
     if (isCredentials || isAdvert) form.querySelector('[role="alert"]')?.classList.add('hidden');
     try {
@@ -672,10 +814,11 @@ document.addEventListener('DOMContentLoaded', () => {
         if (state) toast(recovering ? 'Your new password is saved. Use your existing email and new password for future sign-ins until you change it again.' : 'Your password is saved and your account is signed in.');
       } else {
         const u = me(); if (!u || u.banned) throw new Error('Your account is unavailable. Sign in again or contact Admin.');
-        if (form.id === 'advert-form' || form.id === 'delete-advert-form') {
+        if (form.id === 'advert-form' || form.id === 'moving-advert-form' || form.id === 'delete-advert-form') {
           if (u.role !== 'admin') throw new Error('Administrator access required.');
           const checked = await verifyAccess(); if (checked.role !== 'admin' || checked.user_id !== u.id) throw new Error('Administrator permissions could not be verified.');
-          if (form.id === 'advert-form') {
+          if (form.id === 'advert-form' || form.id === 'moving-advert-form') {
+            const isMoving = form.id === 'moving-advert-form';
             const title = String(fd.get('title')||'').trim(), message = String(fd.get('message')||'').trim();
             const rawImage = String(fd.get('image_url')||'').trim(), rawLink = String(fd.get('link_url')||'').trim(), image = secureUrl(rawImage), link = secureUrl(rawLink);
             if (!title || title.length > 120) throw new Error('Enter a title of 1–120 characters.');
@@ -683,10 +826,17 @@ document.addEventListener('DOMContentLoaded', () => {
             if (rawImage && !image) throw new Error('Use a valid HTTPS image URL, up to 2,048 characters.');
             if (rawLink && !link) throw new Error('Use a valid HTTPS website link, up to 2,048 characters.');
             // Row security rechecks the protected administrator role in the database.
-            const {data,error} = await sb.from('advertisements').insert({title,message,image_url:image||null,link_url:link||null,created_by:u.id}).select(advertColumns).single();
+            const {data,error} = await sb.from(isMoving ? 'moving_advertisements' : 'advertisements').insert({title,message,image_url:image||null,link_url:link||null,created_by:u.id}).select(advertColumns).single();
             if (error) throw new Error(`Advert was not sent: ${error.message}`); if (!data?.id) throw new Error('Publishing was not confirmed. Refresh announcements before retrying.');
-            advertisements = [data,...advertisements.filter(a => a.id !== data.id)]; advertError = ''; drafts.delete(form.dataset.draft); form.reset(); refreshAdvertViews();
-            broadcast?.postMessage({type:'refresh'}); toast('Advert sent. It is visible on the homepage to all visitors and users.'); void loadAdverts();
+            drafts.delete(form.dataset.draft); form.reset();
+            if (isMoving) {
+              movingAdvertRevision++; movingAdvert = data; movingAdvertError = ''; refreshMovingAdvertViews();
+              toast('Moving advert published. Visitors see two slow passes, then the message stays still. Existing adverts are unchanged.'); void loadMovingAdvert();
+            } else {
+              advertisements = [data,...advertisements.filter(a => a.id !== data.id)]; advertError = ''; refreshAdvertViews();
+              toast('Advert sent. It is visible on the homepage to all visitors and users.'); void loadAdverts();
+            }
+            broadcast?.postMessage({type:'refresh'});
           } else {
             const {data,error} = await sb.from('advertisements').delete().eq('id',form.dataset.record).select('id');
             if (error) throw new Error(`Advert was not removed: ${error.message}`); if (!data?.length) throw new Error('The advert was removed already or permission was denied. Refresh announcements.');
@@ -771,20 +921,38 @@ document.addEventListener('DOMContentLoaded', () => {
   });
   // Public announcements and authenticated records refresh without any visible vendor/sync banner.
   const poll = setInterval(async () => {
-    if (document.hidden || busy || authFlow || $('modal').open || !installPopup.classList.contains('hidden')) return;
-    void loadAdverts();
-    if (!authUser || !state) return;
+    if (document.hidden || busy) return;
+    void loadAdverts(); void loadMovingAdvert();
+    if (authFlow || $('modal').open || !installPopup.classList.contains('hidden') || !authUser || !state) return;
     await sync(true); if (page === 'referral' && me()?.role !== 'admin') await loadReferrals();
   },10000);
   document.addEventListener('visibilitychange',() => {
-    if (document.hidden || authFlow || busy || $('modal').open) return;
-    void loadAdverts(); if (authUser) void sync(true);
+    updateMovingPlayback(); captureMovingProgress();
+    if (document.hidden || busy) return;
+    void loadAdverts(); void loadMovingAdvert();
+    if (!authFlow && !$('modal').open && authUser) void sync(true);
   });
   if (broadcast) broadcast.onmessage = e => {
-    if (e.data?.type !== 'refresh' || authFlow || busy || $('modal').open) return;
-    void loadAdverts(); if (authUser) void sync(true);
+    if (e.data?.type !== 'refresh' || busy) return;
+    void loadAdverts(); void loadMovingAdvert();
+    if (!authFlow && !$('modal').open && authUser) void sync(true);
   };
-  window.addEventListener('pagehide',e => { if (!e.persisted) { clearInterval(poll); broadcast?.close(); } });
+  const motionChanged = () => updateMovingPlayback();
+  if (reducedMovingMotion.addEventListener) reducedMovingMotion.addEventListener('change',motionChanged);
+  else reducedMovingMotion.addListener?.(motionChanged);
+  window.addEventListener('storage',e => {
+    if (e.key !== movingStorageKey || !e.newValue || !movingPlayback || movingPlayback.progress.done) return;
+    try {
+      const saved = JSON.parse(e.newValue);
+      // Completing an advert in another tab also stops it here; ordinary refreshes never restart it.
+      if (saved.id === movingPlayback.advert.id && saved.done === true) finishMovingPlayback(movingPlayback,['complete','reduced-motion','unavailable'].includes(saved.reason) ? saved.reason : 'complete');
+    } catch (_) { /* Ignore unrelated or malformed browser storage events. */ }
+  });
+  window.addEventListener('pageshow',() => updateMovingPlayback());
+  window.addEventListener('pagehide',e => {
+    captureMovingProgress();
+    if (!e.persisted) { stopMovingPlayback(); clearInterval(poll); broadcast?.close(); }
+  });
   void initialize();
 });
 </script>
@@ -792,7 +960,9 @@ document.addEventListener('DOMContentLoaded', () => {
 <script>window.onload=function(){var d=document.createElement("div");d.id="appLoadFinished";document.body.appendChild(d);};</script>
 <script>window.onload=function(){var d=document.createElement("div");d.id="appLoadFinished";document.body.appendChild(d);};</script>
 <script>window.onload=function(){var d=document.createElement("div");d.id="appLoadFinished";document.body.appendChild(d);};</script>
+<script>window.onload=function(){var d=document.createElement("div");d.id="appLoadFinished";document.body.appendChild(d);};</script>
 </body>
+
 
 
 
