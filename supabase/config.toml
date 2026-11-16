@@ -11,3 +11,8 @@ project_id = "epdufkwactntickyyofl"
 # Recovery must be callable without a login JWT; Supabase verifies the OTP server-side.
 [functions.account-access]
 verify_jwt = false
+
+# Market quotes require a valid user JWT and an unbanned profile, checked inside
+# the function. Disabling gateway verification supports publishable API keys.
+[functions.market-prices]
+verify_jwt = false
