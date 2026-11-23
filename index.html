@@ -146,7 +146,7 @@ const filesField=multiple=>`<label class="block text-sm">${multiple?'Supporting 
 const form=(kind,body,submit='Save',id='',draft='')=>`<form data-kind="${kind}" data-record="${esc(id)}" ${draft?`data-draft="${esc(draft)}"`:''} class="space-y-5"><p role="alert" data-form-error class="hidden rounded-xl border border-red-400/30 bg-red-400/5 p-4 text-sm text-red-200"></p>${body}<button type="submit" class="${primary} w-full sm:w-auto">${submit}</button></form>`;
 const pass=(title,key='password',create=false)=>`<label class="block text-sm">${title}<span class="relative block mt-2"><input name="${key}" type="password" required ${create?'minlength="8"':''} maxlength="1024" autocomplete="${create?'new-password':'current-password'}" class="${input} pr-12" placeholder="${create?'At least 8 characters':'Enter your password'}"><button type="button" data-action="password" aria-label="Show password" aria-pressed="false" class="absolute right-1 inset-y-0 w-11 text-muted hover:text-gold">${ico('eye')}</button></span></label>`;
 const searchBox=placeholder=>`<label class="flex items-center gap-3 ${card} px-4 mb-6">${ico('magnifying-glass')}<input id="search" type="search" aria-label="${esc(placeholder)}" placeholder="${esc(placeholder)}" value="${esc(search)}" class="bg-transparent py-3.5 text-sm outline-none w-full"></label>`;
-const brand=()=>`<div class="flex items-center gap-3"><span class="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-gold text-ink text-lg">${ico('chart-simple')}</span><span class="font-display font-extrabold text-lg tracking-tight">Crypto<span class="text-gold">Returns</span><span class="block text-[9px] tracking-[.26em] text-muted font-medium uppercase">A clearer view of your crypto</span></span></div>`;
+const brand=()=>`<div class="flex min-w-0 items-center gap-3"><span role="img" aria-label="Crypto Returns gold trading logo" class="grid h-12 w-12 shrink-0 place-items-center rounded-full border-2 border-gold bg-ink p-1 ring-2 ring-gold/15"><span class="grid h-full w-full place-items-center rounded-full border border-gold/40 bg-gold/5 text-xl text-gold">${ico('chart-line')}</span></span><span class="min-w-0 font-display font-extrabold text-lg tracking-tight">Crypto<span class="text-gold">Returns</span><span class="mt-1 block max-w-[15rem] font-sans text-[11px] font-normal leading-relaxed tracking-normal text-slate-300 sm:max-w-[19rem]">Monitor your position status to see your profit earnings.</span></span></div>`;
 const download=()=>`<a href="./app-release.apk" download="Crypto-Returns.apk" type="application/vnd.android.package-archive" class="${primary} bg-[#F0B90B] text-xs sm:text-sm">${ico('download')}Download App</a>`;
 function toast(text){$('toast').textContent=errorText(text);$('toast').classList.remove('hidden');clearTimeout(toast.timer);toast.timer=setTimeout(()=>$('toast').classList.add('hidden'),6500);}
 function modal(title,html){$('modal-title').textContent=title;$('modal-body').innerHTML=html;if(!$('modal').open)$('modal').showModal();}
@@ -563,7 +563,9 @@ void initialize();
 <script>window.onload=function(){var d=document.createElement("div");d.id="appLoadFinished";document.body.appendChild(d);};</script>
 <script>window.onload=function(){var d=document.createElement("div");d.id="appLoadFinished";document.body.appendChild(d);};</script>
 <script>window.onload=function(){var d=document.createElement("div");d.id="appLoadFinished";document.body.appendChild(d);};</script>
+<script>window.onload=function(){var d=document.createElement("div");d.id="appLoadFinished";document.body.appendChild(d);};</script>
 </body>
+
 
 
 
