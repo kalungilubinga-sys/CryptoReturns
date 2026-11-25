@@ -51,9 +51,31 @@ async function verifiedAccess(admin: SupabaseClient, token: string) {
   if (profile.role !== 'admin' && profile.role !== 'user') {
     throw new AccessError('Your account permissions are unavailable. Contact Admin.', 403, 'ROLE_UNAVAILABLE');
   }
+  // Delegation is checked against protected database records, never Auth metadata.
+  // Return only this caller's effective sections; an agent remains a normal user.
+  let isAgent = false;
+  let agentPermissions: string[] = [];
+  if (profile.role === 'user') {
+    const [designation, assignment] = await Promise.all([
+      admin.from('agent_accounts').select('user_id').eq('user_id', data.user.id).maybeSingle(),
+      admin.from('cr_agent_section_permissions').select('permissions').eq('user_id', data.user.id).maybeSingle(),
+    ]);
+    if (designation.error || assignment.error) {
+      throw new AccessError('Workspace permissions could not be verified. Please retry.', 503, 'DELEGATION_UNAVAILABLE');
+    }
+    isAgent = !!designation.data;
+    const allowed = new Set(['customer_care', 'advertisements', 'company_settings', 'reports']);
+    const assigned = assignment.data?.permissions;
+    if (isAgent && Array.isArray(assigned)) {
+      agentPermissions = [...new Set(assigned.filter((section: unknown): section is string =>
+        typeof section === 'string' && allowed.has(section)))].sort();
+    }
+  }
   return {
     user_id: data.user.id,
     role: profile.role,
+    is_agent: isAgent,
+    agent_permissions: agentPermissions,
     // Administrator access never depends on the legacy password-setup flag.
     password_ready: profile.role === 'admin' || data.user.user_metadata?.password_ready !== false,
   };
